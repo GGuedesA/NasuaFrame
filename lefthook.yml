@@ -1,0 +1,31 @@
+# https://lefthook.dev/configuration/
+# Fix formatting with: pnpm format && cargo fmt --all
+
+# Plain output
+colors: false
+no_tty: true
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: prettier
+      glob: "*.{js,ts,svelte,json,css,html,md,yml,yaml}"
+      run: pnpm exec prettier --check {staged_files}
+    - name: eslint
+      glob: "*.{js,ts,svelte}"
+      run: pnpm exec eslint {staged_files}
+    - name: rustfmt
+      glob: "*.rs"
+      run: cargo fmt --all -- --check
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: pnpm exec commitlint --edit {1}
+
+pre-push:
+  jobs:
+    - run: pnpm check
+    - run: pnpm test
+    - run: cargo clippy --workspace --all-targets -- -D warnings
+    - run: cargo test --workspace

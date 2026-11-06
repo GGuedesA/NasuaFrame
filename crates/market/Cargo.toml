@@ -1,0 +1,10 @@
+[package]
+name = "nasua-market"
+description = "warframe.market REST and WebSocket client for NasuaFrame."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+nasua-core = { path = "../core" }
