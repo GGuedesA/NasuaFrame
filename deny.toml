@@ -4,6 +4,9 @@ all-features = true
 
 [advisories]
 version = 2
+# Only fail on unmaintained crates we depend on directly. Tauri's Linux stack (gtk/glib, zbus)
+# pulls in unmaintained crates we can't replace; security vulnerabilities still fail everywhere.
+unmaintained = "workspace"
 
 [licenses]
 version = 2
@@ -24,7 +27,7 @@ allow = [
 ]
 
 [bans]
-multiple-versions = "warn"
+multiple-versions = "allow" # Tauri's dependency tree has many unavoidable duplicates
 wildcards = "allow" # workspace path deps have no version
 
 [sources]
