@@ -2151,18 +2151,18 @@ dependencies = [
 
 [[package]]
 name = "nasua-core"
-version = "0.0.1"
+version = "0.0.2"
 
 [[package]]
 name = "nasua-market"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "nasua-core",
 ]
 
 [[package]]
 name = "nasuaframe"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "nasua-core",
  "nasua-market",

@@ -1,6 +1,6 @@
 {
   "name": "nasuaframe",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A lightweight desktop companion for Warframe players",
   "type": "module",
   "packageManager": "pnpm@12.18.0",
