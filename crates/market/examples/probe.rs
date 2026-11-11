@@ -102,8 +102,9 @@ async fn main() -> Result<()> {
                         order["type"] == "sell" && order["platinum"].as_i64() <= Some(max_price);
                     matches += usize::from(is_match);
                     println!(
-                        "{} {} {}p rank={} qty={} by {} ({})",
+                        "{} {} {} {}p rank={} qty={} by {} ({})",
                         if is_match { "MATCH" } else { "order" },
+                        order["id"],
                         order["type"],
                         order["platinum"],
                         order["rank"],
