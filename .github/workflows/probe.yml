@@ -1,0 +1,32 @@
+name: Probe
+
+# Run the warframe.market protocol probe on demand: Actions → Probe → Run workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: How long to listen
+        default: "600"
+      item:
+        description: Item slug to watch
+        default: archon_intensify
+      max_price:
+        description: Sell orders at or below this price are flagged as matches
+        default: "150"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo run -p nasua-market --example probe -- "$LISTEN_SECONDS" "$ITEM" "$MAX_PRICE"
+        env:
+          LISTEN_SECONDS: ${{ inputs.seconds }}
+          ITEM: ${{ inputs.item }}
+          MAX_PRICE: ${{ inputs.max_price }}
