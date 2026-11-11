@@ -1,10 +1,11 @@
 //! Protocol probe for warframe.market.
 //!
-//! Run: `cargo run -p nasua-market --example probe -- [seconds] [item-slug]`
-//! (defaults: 90 seconds, `mirage_prime_set`).
+//! Run: `cargo run -p nasua-market --example probe -- [seconds] [item-slug] [max-price]`
+//! (defaults: 300 seconds, `archon_intensify`, 150).
 //!
-//! It prints the REST response headers and every raw WebSocket message without signing in,
-//! to check the message format, which subscriptions need an account, and the rate limits.
+//! It subscribes to the global new-orders stream, prints the first raw
+//! message of each route, and highlights orders for the watched item. Sell orders at or
+//! below `max-price` are flagged as matches, like a buyer's alert would be.
 
 use std::collections::BTreeMap;
 use std::time::Duration;
@@ -21,6 +22,7 @@ const USER_AGENT: &str = concat!(
 );
 const REST_BASE: &str = "https://api.warframe.market/v2";
 const WS_URL: &str = "wss://ws.warframe.market/socket";
+const NEW_ORDER_EVENT: &str = "@wfm|event/subscriptions/newOrder";
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -31,8 +33,9 @@ async fn main() -> Result<()> {
         .expect("install TLS crypto provider");
 
     let mut args = std::env::args().skip(1);
-    let seconds: u64 = args.next().map(|s| s.parse()).transpose()?.unwrap_or(90);
-    let slug = args.next().unwrap_or_else(|| "mirage_prime_set".into());
+    let seconds: u64 = args.next().map(|s| s.parse()).transpose()?.unwrap_or(300);
+    let slug = args.next().unwrap_or_else(|| "archon_intensify".into());
+    let max_price: i64 = args.next().map(|s| s.parse()).transpose()?.unwrap_or(150);
 
     println!("== REST: GET /item/{slug}");
     let item_id = match fetch_item_id(&slug) {
@@ -41,7 +44,7 @@ async fn main() -> Result<()> {
             Some(id)
         }
         Err(e) => {
-            println!("REST failed: {e}\n(skipping the item subscription)\n");
+            println!("REST failed: {e}\n(watching no item, stream test only)\n");
             None
         }
     };
@@ -57,28 +60,21 @@ async fn main() -> Result<()> {
     let (mut ws, response) = tokio_tungstenite::connect_async(request).await?;
     println!("connected: HTTP {}", response.status());
 
-    // No sign-in on purpose: the responses tell which subscriptions need an account.
-    let mut subscriptions = vec![(
-        "probe-new-orders",
-        "@wfm|cmd/subscribe/newOrders",
-        json!({ "platform": "pc", "crossplay": true }),
-    )];
-    if let Some(item_id) = item_id {
-        subscriptions.push((
-            "probe-item",
-            "@wfm|cmd/subscribe/item",
-            json!({ "itemId": item_id }),
-        ));
-    }
-    for (id, route, payload) in subscriptions {
-        let message = json!({ "route": route, "payload": payload, "id": id }).to_string();
-        println!(">> {message}");
-        ws.send(Message::text(message)).await?;
-    }
+    let subscribe = json!({
+        "route": "@wfm|cmd/subscribe/newOrders",
+        "id": "probe-new-orders",
+        "payload": { "platform": "pc", "crossplay": true },
+    })
+    .to_string();
+    println!(">> {subscribe}");
+    ws.send(Message::text(subscribe)).await?;
 
-    println!("\nListening for {seconds}s (first message per route printed in full)...\n");
+    println!(
+        "\nListening for {seconds}s. Watching `{slug}`: sell orders at or below {max_price}p are MATCH.\n"
+    );
     let deadline = Instant::now() + Duration::from_secs(seconds);
     let mut counts: BTreeMap<String, usize> = BTreeMap::new();
+    let (mut watched, mut matches) = (0, 0);
     loop {
         match timeout_at(deadline, ws.next()).await {
             Err(_) => break, // time is up
@@ -88,16 +84,33 @@ async fn main() -> Result<()> {
             }
             Ok(Some(Err(e))) => return Err(e.into()),
             Ok(Some(Ok(Message::Text(text)))) => {
-                let route = serde_json::from_str::<Value>(text.as_str())
-                    .ok()
-                    .and_then(|v| v["route"].as_str().map(str::to_owned))
-                    .unwrap_or_else(|| "<no route>".into());
+                let message: Value = serde_json::from_str(text.as_str()).unwrap_or_default();
+                let route = message["route"].as_str().unwrap_or("<no route>").to_owned();
                 let seen = counts.entry(route.clone()).or_default();
                 *seen += 1;
                 if *seen == 1 {
-                    println!("<< [{route}] {text}\n");
-                } else {
-                    println!("<< [{route}] #{seen}");
+                    println!("<< first [{route}] {text}\n");
+                }
+
+                let order = &message["payload"];
+                let is_watched = route == NEW_ORDER_EVENT
+                    && item_id.is_some()
+                    && order["itemId"].as_str() == item_id.as_deref();
+                if is_watched {
+                    watched += 1;
+                    let is_match =
+                        order["type"] == "sell" && order["platinum"].as_i64() <= Some(max_price);
+                    matches += usize::from(is_match);
+                    println!(
+                        "{} {} {}p rank={} qty={} by {} ({})",
+                        if is_match { "MATCH" } else { "order" },
+                        order["type"],
+                        order["platinum"],
+                        order["rank"],
+                        order["quantity"],
+                        order["user"]["ingameName"],
+                        order["user"]["status"],
+                    );
                 }
             }
             Ok(Some(Ok(Message::Close(frame)))) => {
@@ -108,10 +121,11 @@ async fn main() -> Result<()> {
         }
     }
 
-    println!("\n== Summary: messages per route");
+    println!("\n== Summary");
     for (route, n) in &counts {
         println!("{n:>6}  {route}");
     }
+    println!("`{slug}` orders seen: {watched}, matches: {matches}");
     Ok(())
 }
 
@@ -119,9 +133,7 @@ async fn main() -> Result<()> {
 fn fetch_item_id(slug: &str) -> Result<String> {
     let mut response = ureq::get(format!("{REST_BASE}/item/{slug}"))
         .header("User-Agent", USER_AGENT)
-        .header("Platform", "pc")
         .header("Language", "en")
-        .header("Crossplay", "true")
         .call()?;
     println!("HTTP {}", response.status());
     for (name, value) in response.headers() {
