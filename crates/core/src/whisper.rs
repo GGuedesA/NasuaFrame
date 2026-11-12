@@ -44,19 +44,20 @@ mod tests {
 
     #[test]
     fn answering_a_sell_order() {
-        let order = order(OrderType::Sell, "gg_kosmos", 35, Some(7));
+        // name should be anon on tests aaaaaa
+        let order = order(OrderType::Sell, "TestTrader", 35, Some(7));
         assert_eq!(
             build_whisper(&order, "Archon Intensify"),
-            r#"/w gg_kosmos Hi! I want to buy: "Archon Intensify (rank 7)" for 35 platinum. (warframe.market)"#
+            r#"/w TestTrader Hi! I want to buy: "Archon Intensify (rank 7)" for 35 platinum. (warframe.market)"#
         );
     }
 
     #[test]
     fn answering_a_buy_order() {
-        let order = order(OrderType::Buy, "7ori", 60, Some(10));
+        let order = order(OrderType::Buy, "TestBuyer", 60, Some(10));
         assert_eq!(
             build_whisper(&order, "Archon Intensify"),
-            r#"/w 7ori Hi! I want to sell: "Archon Intensify (rank 10)" for 60 platinum. (warframe.market)"#
+            r#"/w TestBuyer Hi! I want to sell: "Archon Intensify (rank 10)" for 60 platinum. (warframe.market)"#
         );
     }
 
