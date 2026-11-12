@@ -10,14 +10,25 @@ pub fn build_whisper(order: &Order, item_name: &str) -> String {
         OrderType::Sell => "buy",
         OrderType::Buy => "sell",
     };
-    let item = match order.rank {
-        Some(rank) => format!("{item_name} (rank {rank})"),
+    let mut item = match &order.subtype {
+        Some(subtype) => format!("{} {item_name}", capitalize(subtype)),
         None => item_name.to_owned(),
     };
+    if let Some(rank) = order.rank {
+        item = format!("{item} (rank {rank})");
+    }
     format!(
         "/w {} Hi! I want to {action}: \"{item}\" for {} platinum. (warframe.market)",
         order.user.ingame_name, order.platinum
     )
+}
+
+fn capitalize(word: &str) -> String {
+    let mut chars = word.chars();
+    match chars.next() {
+        Some(first) => first.to_uppercase().chain(chars).collect(),
+        None => String::new(),
+    }
 }
 
 #[cfg(test)]
@@ -62,11 +73,27 @@ mod tests {
     }
 
     #[test]
-    fn unranked_items_have_no_rank_suffix() {
-        let order = order(OrderType::Sell, "someone", 20, None);
+    fn rank_zero_is_still_shown() {
+        let order = order(OrderType::Sell, "TestTrader", 23, Some(0));
         assert_eq!(
-            build_whisper(&order, "Neo A1 Relic"),
-            r#"/w someone Hi! I want to buy: "Neo A1 Relic" for 20 platinum. (warframe.market)"#
+            build_whisper(&order, "Archon Intensify"),
+            r#"/w TestTrader Hi! I want to buy: "Archon Intensify (rank 0)" for 23 platinum. (warframe.market)"#
+        );
+    }
+
+    #[test]
+    fn subtype_is_a_capitalized_prefix() {
+        let relic = |subtype: &str| Order {
+            subtype: Some(subtype.into()),
+            ..order(OrderType::Sell, "TestTrader", 30, None)
+        };
+        assert_eq!(
+            build_whisper(&relic("intact"), "Neo A1 Relic"),
+            r#"/w TestTrader Hi! I want to buy: "Intact Neo A1 Relic" for 30 platinum. (warframe.market)"#
+        );
+        assert_eq!(
+            build_whisper(&relic("radiant"), "Meso A6 Relic"),
+            r#"/w TestTrader Hi! I want to buy: "Radiant Meso A6 Relic" for 30 platinum. (warframe.market)"#
         );
     }
 }
