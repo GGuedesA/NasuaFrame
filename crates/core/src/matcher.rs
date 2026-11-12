@@ -53,14 +53,14 @@ mod tests {
 
     fn sell_order() -> Order {
         Order {
-            id: "6af4b85c90780835bcdaae7c".into(),
+            id: "000000000000000000000001".into(),
             item_id: INTENSIFY.into(),
             order_type: OrderType::Sell,
             platinum: 35,
             rank: Some(7),
             subtype: None,
             user: Trader {
-                ingame_name: "gg_kosmos".into(),
+                ingame_name: "TestTrader".into(),
                 platform: Platform::Pc,
                 crossplay: true,
                 status: Status::Ingame,

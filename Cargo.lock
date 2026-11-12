@@ -2265,6 +2265,7 @@ dependencies = [
  "futures-util",
  "nasua-core",
  "rustls",
+ "serde",
  "serde_json",
  "tokio",
  "tokio-tungstenite",
