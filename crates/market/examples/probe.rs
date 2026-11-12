@@ -6,49 +6,42 @@
 use std::time::Duration;
 
 use nasua_core::matcher::matches;
-use nasua_core::model::{Filter, OrderType, Platform, Status};
+use nasua_core::model::{Filter, Item, OrderType, Platform, Status};
+use nasua_core::whisper::build_whisper;
 use nasua_market::client::{self, Error};
-use serde_json::Value;
+use nasua_market::rest;
 use tokio::time::{Instant, timeout_at};
-
-const USER_AGENT: &str = concat!(
-    "NasuaFrame-probe/",
-    env!("CARGO_PKG_VERSION"),
-    " (+https://github.com/GGuedesA/NasuaFrame)"
-);
-const REST_BASE: &str = "https://api.warframe.market/v2";
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let _ = rustls::crypto::ring::default_provider().install_default();
-
     let mut args = std::env::args().skip(1);
     let seconds: u64 = args.next().map(|s| s.parse()).transpose()?.unwrap_or(300);
     let slug = args.next().unwrap_or_else(|| "archon_intensify".into());
     let max_price: u32 = args.next().map(|s| s.parse()).transpose()?.unwrap_or(150);
 
-    let filter = match fetch_item_id(&slug) {
-        Ok(item_id) => {
-            println!("`{slug}` item id: {item_id}");
-            Some(Filter {
-                item_id,
-                intent: OrderType::Buy,
-                price_limit: max_price,
-                platform: Platform::Pc,
-                crossplay: true,
-                rank: None,
-                subtype: None,
-                // show all of them, status is printed anyway
-                min_status: Status::Offline,
-            })
+    let watched_item = match find_item(&slug) {
+        Ok(item) => {
+            println!("`{slug}`: {item:?}");
+            Some(item)
         }
         Err(e) => {
-            println!("REST failed: {e} (watching no item, stream test only)");
+            println!("item lookup failed: {e} (watching no item, stream test only)");
             None
         }
     };
+    let filter = watched_item.as_ref().map(|item| Filter {
+        item_id: item.id.clone(),
+        intent: OrderType::Buy,
+        price_limit: max_price,
+        platform: Platform::Pc,
+        crossplay: true,
+        rank: None,
+        subtype: None,
+        // show all of them, status is printed anyway
+        min_status: Status::Offline,
+    });
 
     let mut stream = client::connect(Platform::Pc, true).await?;
     println!(
@@ -89,6 +82,9 @@ async fn main() -> Result<()> {
                     order.user.ingame_name,
                     order.user.status,
                 );
+                if let (true, Some(item)) = (is_match, &watched_item) {
+                    println!("  {}", build_whisper(&order, &item.name));
+                }
             }
         }
     }
@@ -99,16 +95,13 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-/// item id from the slug, over REST
-fn fetch_item_id(slug: &str) -> Result<String> {
-    let body: Value = ureq::get(format!("{REST_BASE}/item/{slug}"))
-        .header("User-Agent", USER_AGENT)
-        .header("Language", "en")
-        .call()?
-        .body_mut()
-        .read_json()?;
-    match body["data"]["id"].as_str() {
-        Some(id) => Ok(id.to_owned()),
-        None => Err(format!("no data.id in response: {body}").into()),
-    }
+/// loads the whole catalog, so this also tests `rest` against the live api
+fn find_item(slug: &str) -> Result<Item> {
+    println!("catalog version: {}", rest::fetch_items_version()?);
+    let items = rest::fetch_items()?;
+    println!("catalog: {} items", items.len());
+    items
+        .into_iter()
+        .find(|item| item.slug == slug)
+        .ok_or_else(|| format!("no item with slug `{slug}`").into())
 }

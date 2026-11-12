@@ -58,6 +58,18 @@ pub struct Order {
     pub user: Trader,
 }
 
+/// tradable item from the market catalog
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Item {
+    pub id: String,
+    pub slug: String,
+    pub name: String,
+    /// None for items without ranks
+    pub max_rank: Option<u8>,
+    /// relic refinements and such, empty for most items
+    pub subtypes: Vec<String>,
+}
+
 /// What the user is looking for, `intent` is what the USER wants to do, so a `Buy`
 /// filter matches other players' `Sell` orders
 #[derive(Debug, Clone, PartialEq, Eq)]

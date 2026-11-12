@@ -10,14 +10,10 @@ use tokio::net::TcpStream;
 use tokio_tungstenite::tungstenite::{self, Message, client::IntoClientRequest, http::HeaderValue};
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 
+use crate::USER_AGENT;
 use crate::events::parse_new_order;
 
 const WS_URL: &str = "wss://ws.warframe.market/socket";
-const USER_AGENT: &str = concat!(
-    "NasuaFrame/",
-    env!("CARGO_PKG_VERSION"),
-    " (+https://github.com/GGuedesA/NasuaFrame)"
-);
 const SUBSCRIBE_ROUTE: &str = "@wfm|cmd/subscribe/newOrders";
 const REPLY_TIMEOUT: Duration = Duration::from_secs(10);
 
@@ -56,8 +52,7 @@ pub struct OrderStream {
 
 /// connects and subscribes to new orders for one platform
 pub async fn connect(platform: Platform, crossplay: bool) -> Result<OrderStream, Error> {
-    // only fails if a provider is already installed
-    let _ = rustls::crypto::ring::default_provider().install_default();
+    crate::install_tls();
     connect_to(WS_URL, platform, crossplay).await
 }
 
