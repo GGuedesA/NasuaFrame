@@ -3,7 +3,7 @@
   import { invoke } from "@tauri-apps/api/core";
   import type { Update } from "@tauri-apps/plugin-updater";
   import { onMount } from "svelte";
-  import { findUpdate, installUpdate } from "$lib/updater";
+  import { findUpdate, installUpdate } from "#lib/updater.ts";
 
   let version = $state("");
   let update = $state<Update | null>(null);
