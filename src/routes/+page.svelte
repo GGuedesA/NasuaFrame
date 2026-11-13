@@ -32,13 +32,19 @@
     }
   }
 
-  let name = $state("");
-  let greetMsg = $state("");
+  type CatalogStatus = { version: string | null; error: string | null };
+  let catalog = $state<CatalogStatus | null>(null);
 
-  async function greet(event: Event) {
-    event.preventDefault();
-    greetMsg = await invoke("greet", { name });
+  async function refreshCatalog() {
+    catalog = null;
+    try {
+      catalog = await invoke<CatalogStatus>("refresh_catalog");
+    } catch (e) {
+      catalog = { version: null, error: String(e) };
+    }
   }
+
+  onMount(refreshCatalog);
 </script>
 
 <main class="container">
@@ -64,11 +70,16 @@
   </div>
   <p>Click on the Tauri, Vite, and SvelteKit logos to learn more.</p>
 
-  <form class="row" onsubmit={greet}>
-    <input id="greet-input" placeholder="Enter a name..." bind:value={name} />
-    <button type="submit">Greet</button>
-  </form>
-  <p>{greetMsg}</p>
+  <p role="status">
+    {#if !catalog}
+      Loading items...
+    {:else if catalog.version}
+      Items ready{catalog.error ? " (offline, using the saved list)" : ""}
+    {:else}
+      Can't load items: {catalog.error}
+      <button onclick={refreshCatalog}>Retry</button>
+    {/if}
+  </p>
 </main>
 
 <style>
@@ -135,7 +146,6 @@
     text-align: center;
   }
 
-  input,
   button {
     border-radius: 8px;
     border: 1px solid transparent;
@@ -161,13 +171,8 @@
     background-color: #e8e8e8;
   }
 
-  input,
   button {
     outline: none;
-  }
-
-  #greet-input {
-    margin-right: 5px;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -180,7 +185,6 @@
       color: #24c8db;
     }
 
-    input,
     button {
       color: #ffffff;
       background-color: #0f0f0f98;

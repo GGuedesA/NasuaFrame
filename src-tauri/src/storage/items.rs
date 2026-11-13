@@ -36,9 +36,23 @@ pub fn replace_all(conn: &mut Connection, items: &[Item], version: &str) -> Resu
 }
 
 pub fn load_all(conn: &Connection) -> Result<Vec<Item>, Error> {
-    let mut query =
-        conn.prepare("SELECT id, slug, name, max_rank, subtypes FROM items ORDER BY name")?;
-    let rows = query.query_map([], |row| {
+    select(conn, "", -1)
+}
+
+pub fn search(conn: &Connection, query: &str, limit: u32) -> Result<Vec<Item>, Error> {
+    select(conn, query, limit.into())
+}
+
+fn select(conn: &Connection, query: &str, limit: i64) -> Result<Vec<Item>, Error> {
+    let escaped = query
+        .replace('\\', "\\\\")
+        .replace('%', "\\%")
+        .replace('_', "\\_");
+    let mut stmt = conn.prepare(
+        "SELECT id, slug, name, max_rank, subtypes FROM items
+         WHERE name LIKE '%' || ?1 || '%' ESCAPE '\\' ORDER BY name LIMIT ?2",
+    )?;
+    let rows = stmt.query_map(params![escaped, limit], |row| {
         let item = Item {
             id: row.get(0)?,
             slug: row.get(1)?,
@@ -103,6 +117,29 @@ mod tests {
         replace_all(&mut conn, &fresh, "v2").unwrap();
         assert_eq!(load_all(&conn).unwrap(), fresh);
         assert_eq!(cached_version(&conn).unwrap().as_deref(), Some("v2"));
+    }
+
+    #[test]
+    fn search_is_case_insensitive_and_literal() {
+        let mut conn = open_in_memory().unwrap();
+        let items = vec![
+            item("1", "Archon Intensify", Some(10), &[]),
+            item("2", "Intensify", Some(5), &[]),
+            item("3", "Serration", Some(10), &[]),
+            item("4", "100% Tax", None, &[]),
+        ];
+        replace_all(&mut conn, &items, "v1").unwrap();
+        let names = |q, limit| -> Vec<String> {
+            search(&conn, q, limit)
+                .unwrap()
+                .into_iter()
+                .map(|i| i.name)
+                .collect()
+        };
+        assert_eq!(names("intensify", 10), ["Archon Intensify", "Intensify"]);
+        assert_eq!(names("INTENSIFY", 1), ["Archon Intensify"]);
+        assert_eq!(names("%", 10), ["100% Tax"]);
+        assert!(names("_", 10).is_empty());
     }
 
     #[test]
