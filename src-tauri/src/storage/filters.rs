@@ -142,34 +142,37 @@ impl TryFrom<RawRow> for StoredFilter {
             cooldown_secs: raw.cooldown_secs,
             filter: Filter {
                 item_id: raw.item_id,
-                intent: parse_intent(&raw.intent)?,
+                intent: parse_intent(&raw.intent)
+                    .ok_or_else(|| Error::Corrupt(format!("intent `{}`", raw.intent)))?,
                 price_limit: raw.price_limit,
-                platform: parse_platform(&raw.platform)?,
+                platform: parse_platform(&raw.platform)
+                    .ok_or_else(|| Error::Corrupt(format!("platform `{}`", raw.platform)))?,
                 crossplay: raw.crossplay,
                 rank,
                 subtype: raw.subtype,
-                min_status: parse_status(&raw.min_status)?,
+                min_status: parse_status(&raw.min_status)
+                    .ok_or_else(|| Error::Corrupt(format!("status `{}`", raw.min_status)))?,
             },
         })
     }
 }
 
-fn intent_text(intent: OrderType) -> &'static str {
+pub(crate) fn intent_text(intent: OrderType) -> &'static str {
     match intent {
         OrderType::Buy => "buy",
         OrderType::Sell => "sell",
     }
 }
 
-fn parse_intent(text: &str) -> Result<OrderType, Error> {
+pub(crate) fn parse_intent(text: &str) -> Option<OrderType> {
     match text {
-        "buy" => Ok(OrderType::Buy),
-        "sell" => Ok(OrderType::Sell),
-        other => Err(Error::Corrupt(format!("intent `{other}`"))),
+        "buy" => Some(OrderType::Buy),
+        "sell" => Some(OrderType::Sell),
+        _ => None,
     }
 }
 
-fn platform_text(platform: Platform) -> &'static str {
+pub(crate) fn platform_text(platform: Platform) -> &'static str {
     match platform {
         Platform::Pc => "pc",
         Platform::Ps4 => "ps4",
@@ -179,18 +182,18 @@ fn platform_text(platform: Platform) -> &'static str {
     }
 }
 
-fn parse_platform(text: &str) -> Result<Platform, Error> {
+pub(crate) fn parse_platform(text: &str) -> Option<Platform> {
     match text {
-        "pc" => Ok(Platform::Pc),
-        "ps4" => Ok(Platform::Ps4),
-        "xbox" => Ok(Platform::Xbox),
-        "switch" => Ok(Platform::Switch),
-        "mobile" => Ok(Platform::Mobile),
-        other => Err(Error::Corrupt(format!("platform `{other}`"))),
+        "pc" => Some(Platform::Pc),
+        "ps4" => Some(Platform::Ps4),
+        "xbox" => Some(Platform::Xbox),
+        "switch" => Some(Platform::Switch),
+        "mobile" => Some(Platform::Mobile),
+        _ => None,
     }
 }
 
-fn status_text(status: Status) -> &'static str {
+pub(crate) fn status_text(status: Status) -> &'static str {
     match status {
         Status::Offline => "offline",
         Status::Online => "online",
@@ -198,12 +201,12 @@ fn status_text(status: Status) -> &'static str {
     }
 }
 
-fn parse_status(text: &str) -> Result<Status, Error> {
+pub(crate) fn parse_status(text: &str) -> Option<Status> {
     match text {
-        "offline" => Ok(Status::Offline),
-        "online" => Ok(Status::Online),
-        "ingame" => Ok(Status::Ingame),
-        other => Err(Error::Corrupt(format!("status `{other}`"))),
+        "offline" => Some(Status::Offline),
+        "online" => Some(Status::Online),
+        "ingame" => Some(Status::Ingame),
+        _ => None,
     }
 }
 
