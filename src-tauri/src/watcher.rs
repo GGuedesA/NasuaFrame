@@ -11,6 +11,7 @@ use nasua_market::client;
 use serde::Serialize;
 use tauri::async_runtime::{self, JoinHandle};
 use tauri::{AppHandle, Emitter, Manager};
+use tauri_plugin_notification::NotificationExt;
 
 use crate::commands::Db;
 use crate::storage::filters::{StoredFilter, platform_text};
@@ -92,6 +93,7 @@ async fn run_feed(feed: Feed, filters: Arc<RwLock<Vec<StoredFilter>>>, app: AppH
         let started = Instant::now();
         let problem = match client::connect(feed.0, feed.1).await {
             Ok(mut stream) => {
+                log::info!("feed {} connected", feed_label(feed));
                 report(&app, feed, None);
                 read_orders(&mut stream, feed, &filters, &app, &mut last_alert).await
             }
@@ -103,6 +105,7 @@ async fn run_feed(feed: Feed, filters: Arc<RwLock<Vec<StoredFilter>>>, app: AppH
         let wait = retry_delay(failures);
         failures = failures.saturating_add(1);
         let message = format!("{problem}, retrying in {}s", wait.as_secs());
+        log::warn!("feed {}: {message}", feed_label(feed));
         report(&app, feed, Some(message));
         tokio::time::sleep(wait).await;
     }
@@ -187,20 +190,50 @@ fn send_alerts(app: &AppHandle, filter_ids: &[i64], order: &Order) {
             trader: order.user.ingame_name.clone(),
             whisper: whisper.clone(),
         };
+        log::info!("alert for filter {filter_id}: {name} {}p", order.platinum);
         if let Err(e) = app.emit("alert", alert) {
-            eprintln!("alert not sent: {e}");
+            log::warn!("alert not sent to the ui: {e}");
         }
+    }
+    notify(app, &name, order);
+}
+
+/// sent from here, a hidden window may not run its js in time
+fn notify(app: &AppHandle, name: &str, order: &Order) {
+    let focused = app
+        .get_webview_window("main")
+        .and_then(|window| window.is_focused().ok())
+        .unwrap_or(false);
+    // the list on screen is enough while the user is looking at it
+    if focused {
+        return;
+    }
+    let shown = app
+        .notification()
+        .builder()
+        .title(format!("{name}, {}p", order.platinum))
+        .body(format!(
+            "{} - open NasuaFrame to copy the whisper",
+            order.user.ingame_name
+        ))
+        .show();
+    if let Err(e) = shown {
+        log::warn!("notification failed: {e}");
     }
 }
 
-fn report(app: &AppHandle, feed: Feed, problem: Option<String>) {
+fn feed_label(feed: Feed) -> String {
     let crossplay = if feed.1 { " + crossplay" } else { "" };
+    format!("{}{crossplay}", platform_text(feed.0))
+}
+
+fn report(app: &AppHandle, feed: Feed, problem: Option<String>) {
     let status = FeedStatus {
-        feed: format!("{}{crossplay}", platform_text(feed.0)),
+        feed: feed_label(feed),
         problem,
     };
     if let Err(e) = app.emit("feed-status", status) {
-        eprintln!("feed status not sent: {e}");
+        log::warn!("feed status not sent to the ui: {e}");
     }
 }
 

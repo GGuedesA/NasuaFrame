@@ -7,6 +7,7 @@
     listFilters,
     onAlert,
     onFeedStatus,
+    openLogFolder,
     refreshCatalog as fetchCatalog,
     updateFilter,
     type Alert,
@@ -14,7 +15,6 @@
     type FilterView,
   } from "#lib/api.ts";
   import FilterForm from "#lib/FilterForm.svelte";
-  import { notifyAlert } from "#lib/notify.ts";
   import { findUpdate, installUpdate } from "#lib/updater.ts";
 
   let version = $state("");
@@ -63,7 +63,7 @@
   let editing = $state<FilterView | null | undefined>(undefined);
   let confirmingDelete = $state<number | null>(null);
   let feedProblems = $state<Record<string, string>>({});
-  let copyError = $state("");
+  let actionError = $state("");
 
   async function loadFilters() {
     try {
@@ -134,7 +134,15 @@
       await navigator.clipboard.writeText(alert.whisper);
       alert.copied = true;
     } catch (e) {
-      copyError = `Copy failed: ${e}`;
+      actionError = `Copy failed: ${e}`;
+    }
+  }
+
+  async function showLogs() {
+    try {
+      await openLogFolder();
+    } catch (e) {
+      actionError = `Can't open the log folder: ${e}`;
     }
   }
 
@@ -143,7 +151,6 @@
     const stops = [
       onAlert((alert) => {
         alerts = [{ ...alert, key: alertKey++, copied: false }, ...alerts].slice(0, 50);
-        notifyAlert(alert).catch((e) => console.error("notification failed", e));
       }),
       onFeedStatus(({ feed, problem }) => {
         if (problem) feedProblems[feed] = problem;
@@ -178,8 +185,8 @@
   {#each Object.entries(feedProblems) as [feed, problem] (feed)}
     <p class="error" role="status">Order stream {feed}: {problem}</p>
   {/each}
-  {#if copyError}
-    <p class="error" role="alert">{copyError}</p>
+  {#if actionError}
+    <p class="error" role="alert">{actionError}</p>
   {/if}
 
   <section>
@@ -246,6 +253,10 @@
       <p>Nothing yet, matches show up here while the app is open.</p>
     {/if}
   </section>
+
+  <footer>
+    <button onclick={showLogs}>Open log folder</button>
+  </footer>
 </main>
 
 <style>
@@ -299,6 +310,10 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
+  }
+
+  footer {
+    margin-top: 2em;
   }
 
   .off {

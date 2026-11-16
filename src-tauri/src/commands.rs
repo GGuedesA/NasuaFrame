@@ -6,6 +6,7 @@ use nasua_core::model::{Filter, Item, Platform, Status};
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, State};
+use tauri_plugin_opener::OpenerExt;
 
 use crate::catalog;
 use crate::storage::filters::{
@@ -202,12 +203,29 @@ pub fn search_items(db: State<Db>, query: String) -> Result<Vec<ItemView>, Strin
 pub async fn refresh_catalog(app: AppHandle) -> Result<CatalogStatus, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let db = app.state::<Db>();
-        let error = catalog::refresh(&db).err().map(|e| e.to_string());
+        let error = match catalog::refresh(&db) {
+            Ok(outcome) => {
+                log::info!("catalog refresh: {outcome:?}");
+                None
+            }
+            Err(e) => {
+                log::warn!("catalog refresh failed: {e}");
+                Some(e.to_string())
+            }
+        };
         let version = items::cached_version(&db.lock().unwrap()).map_err(|e| e.to_string())?;
         Ok(CatalogStatus { version, error })
     })
     .await
     .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+pub fn open_log_folder(app: AppHandle) -> Result<(), String> {
+    let dir = app.path().app_log_dir().map_err(|e| e.to_string())?;
+    app.opener()
+        .open_path(dir.to_string_lossy(), None::<&str>)
+        .map_err(|e| e.to_string())
 }
 
 #[cfg(test)]
