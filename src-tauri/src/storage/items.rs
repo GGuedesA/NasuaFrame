@@ -1,7 +1,7 @@
 //! cached item catalog + version it came from
 
 use nasua_core::model::Item;
-use rusqlite::{Connection, OptionalExtension, params};
+use rusqlite::{Connection, OptionalExtension, Row, params};
 
 use super::Error;
 
@@ -43,13 +43,15 @@ pub fn search(conn: &Connection, query: &str, limit: u32) -> Result<Vec<Item>, E
     select(conn, query, limit.into())
 }
 
-pub fn name_of(conn: &Connection, id: &str) -> Result<Option<String>, Error> {
-    let name = conn
-        .query_row("SELECT name FROM items WHERE id = ?1", [id], |row| {
-            row.get(0)
-        })
+pub fn get(conn: &Connection, id: &str) -> Result<Option<Item>, Error> {
+    let found = conn
+        .query_row(
+            "SELECT id, slug, name, max_rank, subtypes FROM items WHERE id = ?1",
+            [id],
+            read_row,
+        )
         .optional()?;
-    Ok(name)
+    found.map(with_subtypes).transpose()
 }
 
 fn select(conn: &Connection, query: &str, limit: i64) -> Result<Vec<Item>, Error> {
@@ -61,22 +63,25 @@ fn select(conn: &Connection, query: &str, limit: i64) -> Result<Vec<Item>, Error
         "SELECT id, slug, name, max_rank, subtypes FROM items
          WHERE name LIKE '%' || ?1 || '%' ESCAPE '\\' ORDER BY name LIMIT ?2",
     )?;
-    let rows = stmt.query_map(params![escaped, limit], |row| {
-        let item = Item {
-            id: row.get(0)?,
-            slug: row.get(1)?,
-            name: row.get(2)?,
-            max_rank: row.get(3)?,
-            subtypes: Vec::new(),
-        };
-        Ok((item, row.get::<_, String>(4)?))
-    })?;
-    rows.map(|row| {
-        let (mut item, subtypes) = row?;
-        item.subtypes = serde_json::from_str(&subtypes)?;
-        Ok(item)
-    })
-    .collect()
+    let rows = stmt.query_map(params![escaped, limit], read_row)?;
+    rows.map(|row| with_subtypes(row?)).collect()
+}
+
+/// subtypes stay as json text here, the closure can only return sqlite errors
+fn read_row(row: &Row) -> rusqlite::Result<(Item, String)> {
+    let item = Item {
+        id: row.get(0)?,
+        slug: row.get(1)?,
+        name: row.get(2)?,
+        max_rank: row.get(3)?,
+        subtypes: Vec::new(),
+    };
+    Ok((item, row.get(4)?))
+}
+
+fn with_subtypes((mut item, subtypes): (Item, String)) -> Result<Item, Error> {
+    item.subtypes = serde_json::from_str(&subtypes)?;
+    Ok(item)
 }
 
 /// None until the first successful download
@@ -116,11 +121,8 @@ mod tests {
         replace_all(&mut conn, &items, "v1").unwrap();
         assert_eq!(load_all(&conn).unwrap(), items);
         assert_eq!(cached_version(&conn).unwrap().as_deref(), Some("v1"));
-        assert_eq!(
-            name_of(&conn, "2").unwrap().as_deref(),
-            Some("Neo A1 Relic")
-        );
-        assert_eq!(name_of(&conn, "nope").unwrap(), None);
+        assert_eq!(get(&conn, "2").unwrap().as_ref(), Some(&items[1]));
+        assert_eq!(get(&conn, "nope").unwrap(), None);
     }
 
     #[test]

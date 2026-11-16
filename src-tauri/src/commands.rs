@@ -43,9 +43,12 @@ pub struct FilterView {
     pub cooldown_secs: u32,
     #[serde(flatten)]
     pub fields: FilterFields,
+    /// only sent to the ui, None if the item left the catalog
+    #[serde(default, skip_deserializing)]
+    pub item: Option<ItemView>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ItemView {
     pub id: String,
@@ -102,6 +105,7 @@ impl From<StoredFilter> for FilterView {
             id: stored.id,
             enabled: stored.enabled,
             cooldown_secs: stored.cooldown_secs,
+            item: None,
             fields: FilterFields {
                 intent: intent_text(f.intent).into(),
                 platform: Some(platform_text(f.platform).into()),
@@ -131,8 +135,18 @@ impl From<Item> for ItemView {
 
 #[tauri::command]
 pub fn list_filters(db: State<Db>) -> Result<Vec<FilterView>, String> {
-    let stored = filters::list(&db.lock().unwrap()).map_err(|e| e.to_string())?;
-    Ok(stored.into_iter().map(FilterView::from).collect())
+    let conn = db.lock().unwrap();
+    let stored = filters::list(&conn).map_err(|e| e.to_string())?;
+    stored
+        .into_iter()
+        .map(|s| {
+            let item = items::get(&conn, &s.filter.item_id).map_err(|e| e.to_string())?;
+            Ok(FilterView {
+                item: item.map(ItemView::from),
+                ..FilterView::from(s)
+            })
+        })
+        .collect()
 }
 
 /// returns the new filter's id

@@ -128,7 +128,10 @@ fn send_alerts(app: &AppHandle, filter_ids: &[i64], order: &Order) {
     let name = {
         let db = app.state::<Db>();
         let conn = db.lock().unwrap();
-        items::name_of(&conn, &order.item_id).ok().flatten()
+        items::get(&conn, &order.item_id)
+            .ok()
+            .flatten()
+            .map(|item| item.name)
     };
     // item missing from the cache, the id still tells the user something
     let name = name.unwrap_or_else(|| order.item_id.clone());
