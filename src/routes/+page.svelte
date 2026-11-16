@@ -14,6 +14,7 @@
     type FilterView,
   } from "#lib/api.ts";
   import FilterForm from "#lib/FilterForm.svelte";
+  import { notifyAlert } from "#lib/notify.ts";
   import { findUpdate, installUpdate } from "#lib/updater.ts";
 
   let version = $state("");
@@ -143,6 +144,7 @@
     const stops = [
       onAlert((alert) => {
         alerts = [{ ...alert, key: alertKey++, copied: false }, ...alerts].slice(0, 50);
+        notifyAlert(alert).catch((e) => console.error("notification failed", e));
       }),
       onWatcherError((message) => (watcherError = message)),
     ];
