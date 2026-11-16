@@ -6,7 +6,7 @@
     deleteFilter,
     listFilters,
     onAlert,
-    onWatcherError,
+    onFeedStatus,
     refreshCatalog as fetchCatalog,
     updateFilter,
     type Alert,
@@ -62,7 +62,8 @@
   // undefined = form closed, null = new filter
   let editing = $state<FilterView | null | undefined>(undefined);
   let confirmingDelete = $state<number | null>(null);
-  let watcherError = $state("");
+  let feedProblems = $state<Record<string, string>>({});
+  let copyError = $state("");
 
   async function loadFilters() {
     try {
@@ -73,11 +74,9 @@
     }
   }
 
-  // every filter change restarts dead connections, so the old error is stale
   async function changed() {
     editing = undefined;
     confirmingDelete = null;
-    watcherError = "";
     await loadFilters();
   }
 
@@ -135,7 +134,7 @@
       await navigator.clipboard.writeText(alert.whisper);
       alert.copied = true;
     } catch (e) {
-      watcherError = `Copy failed: ${e}`;
+      copyError = `Copy failed: ${e}`;
     }
   }
 
@@ -146,7 +145,10 @@
         alerts = [{ ...alert, key: alertKey++, copied: false }, ...alerts].slice(0, 50);
         notifyAlert(alert).catch((e) => console.error("notification failed", e));
       }),
-      onWatcherError((message) => (watcherError = message)),
+      onFeedStatus(({ feed, problem }) => {
+        if (problem) feedProblems[feed] = problem;
+        else delete feedProblems[feed];
+      }),
     ];
     return () => stops.forEach((stop) => stop.then((unlisten) => unlisten()));
   });
@@ -173,8 +175,11 @@
     {/if}
   </p>
 
-  {#if watcherError}
-    <p class="error" role="alert">Order stream stopped: {watcherError}</p>
+  {#each Object.entries(feedProblems) as [feed, problem] (feed)}
+    <p class="error" role="status">Order stream {feed}: {problem}</p>
+  {/each}
+  {#if copyError}
+    <p class="error" role="alert">{copyError}</p>
   {/if}
 
   <section>
