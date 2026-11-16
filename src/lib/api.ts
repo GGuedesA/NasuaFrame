@@ -50,6 +50,7 @@ export const updateFilter = (filter: FilterView) => invoke<void>("update_filter"
 export const deleteFilter = (id: number) => invoke<void>("delete_filter", { id });
 export const searchItems = (query: string) => invoke<Item[]>("search_items", { query });
 export const refreshCatalog = () => invoke<CatalogStatus>("refresh_catalog");
+export const openLogFolder = () => invoke<void>("open_log_folder");
 
 export const onAlert = (handler: (alert: Alert) => void): Promise<UnlistenFn> =>
   listen<Alert>("alert", (event) => handler(event.payload));

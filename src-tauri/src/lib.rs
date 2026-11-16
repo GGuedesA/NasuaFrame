@@ -14,6 +14,13 @@ pub fn run() {
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             tray::show_window(app);
         }))
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .level(log::LevelFilter::Info)
+                .max_file_size(1_000_000)
+                .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepSome(3))
+                .build(),
+        )
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
@@ -43,6 +50,7 @@ pub fn run() {
             commands::delete_filter,
             commands::search_items,
             commands::refresh_catalog,
+            commands::open_log_folder,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
