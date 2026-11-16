@@ -1,7 +1,6 @@
 //! listens to new orders and alerts the ui when a filter matches
 
 use std::collections::{HashMap, HashSet};
-use std::fmt::Display;
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::{Duration, Instant};
 
@@ -14,11 +13,22 @@ use tauri::async_runtime::{self, JoinHandle};
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::commands::Db;
-use crate::storage::filters::StoredFilter;
+use crate::storage::filters::{StoredFilter, platform_text};
 use crate::storage::items;
 
 /// the stream is subscribed per platform + crossplay
 type Feed = (Platform, bool);
+
+const FIRST_RETRY: Duration = Duration::from_secs(1);
+const MAX_RETRY: Duration = Duration::from_secs(60);
+const STABLE: Duration = Duration::from_secs(60);
+
+/// problem None means connected
+#[derive(Debug, Clone, Serialize)]
+pub struct FeedStatus {
+    pub feed: String,
+    pub problem: Option<String>,
+}
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -52,11 +62,13 @@ impl Watcher {
         *self.filters.write().unwrap() = all;
 
         let mut feeds = self.feeds.lock().unwrap();
-        // dead feeds get dropped too, so they start again below
-        feeds.retain(|feed, task| {
-            let keep = wanted.contains(feed) && !task.inner().is_finished();
+        // a feed only ends by panicking, start it again below
+        feeds.retain(|&feed, task| {
+            let keep = wanted.contains(&feed) && !task.inner().is_finished();
             if !keep {
                 task.abort();
+                // its last problem would stay on screen otherwise
+                report(&self.app, feed, None);
             }
             keep
         });
@@ -72,31 +84,62 @@ fn feed_of(stored: &StoredFilter) -> Feed {
     (stored.filter.platform, stored.filter.crossplay)
 }
 
-// no reconnect yet, a dropped feed only restarts on the next filter change
+/// keeps one feed connected for as long as the app runs
 async fn run_feed(feed: Feed, filters: Arc<RwLock<Vec<StoredFilter>>>, app: AppHandle) {
-    let mut stream = match client::connect(feed.0, feed.1).await {
-        Ok(stream) => stream,
-        Err(e) => return report(&app, e),
-    };
     let mut last_alert = HashMap::new();
+    let mut failures = 0;
+    loop {
+        let started = Instant::now();
+        let problem = match client::connect(feed.0, feed.1).await {
+            Ok(mut stream) => {
+                report(&app, feed, None);
+                read_orders(&mut stream, feed, &filters, &app, &mut last_alert).await
+            }
+            Err(e) => e.to_string(),
+        };
+        if started.elapsed() >= STABLE {
+            failures = 0;
+        }
+        let wait = retry_delay(failures);
+        failures = failures.saturating_add(1);
+        let message = format!("{problem}, retrying in {}s", wait.as_secs());
+        report(&app, feed, Some(message));
+        tokio::time::sleep(wait).await;
+    }
+}
+
+/// returns why the connection ended
+async fn read_orders(
+    stream: &mut client::OrderStream,
+    feed: Feed,
+    filters: &RwLock<Vec<StoredFilter>>,
+    app: &AppHandle,
+    last_alert: &mut HashMap<i64, Instant>,
+) -> String {
     while let Some(next) = stream.next_order().await {
         let order = match next {
             Ok(order) => order,
             Err(client::Error::Parse(_)) => continue,
-            Err(e) => return report(&app, e),
+            Err(e) => return e.to_string(),
         };
         let due = due_filters(
             &filters.read().unwrap(),
             feed,
             &order,
-            &mut last_alert,
+            last_alert,
             Instant::now(),
         );
         if !due.is_empty() {
-            send_alerts(&app, &due, &order);
+            send_alerts(app, &due, &order);
         }
     }
-    report(&app, "connection closed");
+    "connection closed".into()
+}
+
+fn retry_delay(failures: u32) -> Duration {
+    FIRST_RETRY
+        .saturating_mul(2u32.saturating_pow(failures))
+        .min(MAX_RETRY)
 }
 
 /// enabled filters on this feed that match and are past their cooldown
@@ -150,9 +193,14 @@ fn send_alerts(app: &AppHandle, filter_ids: &[i64], order: &Order) {
     }
 }
 
-fn report(app: &AppHandle, error: impl Display) {
-    if let Err(e) = app.emit("watcher-error", error.to_string()) {
-        eprintln!("watcher error not sent: {e}");
+fn report(app: &AppHandle, feed: Feed, problem: Option<String>) {
+    let crossplay = if feed.1 { " + crossplay" } else { "" };
+    let status = FeedStatus {
+        feed: format!("{}{crossplay}", platform_text(feed.0)),
+        problem,
+    };
+    if let Err(e) = app.emit("feed-status", status) {
+        eprintln!("feed status not sent: {e}");
     }
 }
 
@@ -196,6 +244,14 @@ mod tests {
                 status: Status::Ingame,
             },
         }
+    }
+
+    #[test]
+    fn retries_back_off_up_to_a_minute() {
+        let secs: Vec<u64> = [0, 1, 2, 5, 6, 40]
+            .map(|failures| retry_delay(failures).as_secs())
+            .to_vec();
+        assert_eq!(secs, [1, 2, 4, 32, 60, 60]);
     }
 
     #[test]

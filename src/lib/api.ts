@@ -53,5 +53,8 @@ export const refreshCatalog = () => invoke<CatalogStatus>("refresh_catalog");
 
 export const onAlert = (handler: (alert: Alert) => void): Promise<UnlistenFn> =>
   listen<Alert>("alert", (event) => handler(event.payload));
-export const onWatcherError = (handler: (message: string) => void): Promise<UnlistenFn> =>
-  listen<string>("watcher-error", (event) => handler(event.payload));
+/** problem null means the feed is connected */
+export type FeedStatus = { feed: string; problem: string | null };
+
+export const onFeedStatus = (handler: (status: FeedStatus) => void): Promise<UnlistenFn> =>
+  listen<FeedStatus>("feed-status", (event) => handler(event.payload));
