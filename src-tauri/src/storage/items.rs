@@ -43,6 +43,15 @@ pub fn search(conn: &Connection, query: &str, limit: u32) -> Result<Vec<Item>, E
     select(conn, query, limit.into())
 }
 
+pub fn name_of(conn: &Connection, id: &str) -> Result<Option<String>, Error> {
+    let name = conn
+        .query_row("SELECT name FROM items WHERE id = ?1", [id], |row| {
+            row.get(0)
+        })
+        .optional()?;
+    Ok(name)
+}
+
 fn select(conn: &Connection, query: &str, limit: i64) -> Result<Vec<Item>, Error> {
     let escaped = query
         .replace('\\', "\\\\")
@@ -107,6 +116,11 @@ mod tests {
         replace_all(&mut conn, &items, "v1").unwrap();
         assert_eq!(load_all(&conn).unwrap(), items);
         assert_eq!(cached_version(&conn).unwrap().as_deref(), Some("v1"));
+        assert_eq!(
+            name_of(&conn, "2").unwrap().as_deref(),
+            Some("Neo A1 Relic")
+        );
+        assert_eq!(name_of(&conn, "nope").unwrap(), None);
     }
 
     #[test]

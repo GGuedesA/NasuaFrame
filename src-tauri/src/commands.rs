@@ -2,7 +2,7 @@
 
 use std::sync::Mutex;
 
-use nasua_core::model::{Filter, Item, Status};
+use nasua_core::model::{Filter, Item, Platform, Status};
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, State};
@@ -13,6 +13,7 @@ use crate::storage::filters::{
     status_text,
 };
 use crate::storage::items;
+use crate::watcher::Watcher;
 
 pub type Db = Mutex<Connection>;
 
@@ -25,8 +26,8 @@ pub struct FilterFields {
     pub item_id: String,
     pub intent: String,
     pub price_limit: u32,
-    pub platform: String,
-    pub crossplay: bool,
+    pub platform: Option<String>,
+    pub crossplay: Option<bool>,
     pub rank_min: Option<u8>,
     pub rank_max: Option<u8>,
     pub subtype: Option<String>,
@@ -74,14 +75,19 @@ impl TryFrom<FilterFields> for Filter {
             None => Status::Ingame,
             Some(text) => parse_status(text).ok_or_else(|| format!("unknown status `{text}`"))?,
         };
+        let platform = match f.platform.as_deref() {
+            None => Platform::Pc,
+            Some(text) => {
+                parse_platform(text).ok_or_else(|| format!("unknown platform `{text}`"))?
+            }
+        };
         Ok(Filter {
             intent: parse_intent(&f.intent)
                 .ok_or_else(|| format!("unknown intent `{}`", f.intent))?,
-            platform: parse_platform(&f.platform)
-                .ok_or_else(|| format!("unknown platform `{}`", f.platform))?,
+            platform,
             item_id: f.item_id,
             price_limit: f.price_limit,
-            crossplay: f.crossplay,
+            crossplay: f.crossplay.unwrap_or(true),
             rank,
             subtype: f.subtype,
             min_status,
@@ -98,13 +104,13 @@ impl From<StoredFilter> for FilterView {
             cooldown_secs: stored.cooldown_secs,
             fields: FilterFields {
                 intent: intent_text(f.intent).into(),
-                platform: platform_text(f.platform).into(),
+                platform: Some(platform_text(f.platform).into()),
                 min_status: Some(status_text(f.min_status).into()),
                 rank_min: f.rank.as_ref().map(|r| *r.start()),
                 rank_max: f.rank.as_ref().map(|r| *r.end()),
                 item_id: f.item_id,
                 price_limit: f.price_limit,
-                crossplay: f.crossplay,
+                crossplay: Some(f.crossplay),
                 subtype: f.subtype,
             },
         }
@@ -131,25 +137,43 @@ pub fn list_filters(db: State<Db>) -> Result<Vec<FilterView>, String> {
 
 /// returns the new filter's id
 #[tauri::command]
-pub fn add_filter(db: State<Db>, filter: FilterFields) -> Result<i64, String> {
+pub fn add_filter(
+    db: State<Db>,
+    watcher: State<Watcher>,
+    filter: FilterFields,
+) -> Result<i64, String> {
     let filter = Filter::try_from(filter)?;
-    filters::insert(&db.lock().unwrap(), &filter).map_err(|e| e.to_string())
+    let id = filters::insert(&db.lock().unwrap(), &filter).map_err(|e| e.to_string())?;
+    reload_watcher(&db, &watcher)?;
+    Ok(id)
 }
 
 #[tauri::command]
-pub fn update_filter(db: State<Db>, filter: FilterView) -> Result<(), String> {
+pub fn update_filter(
+    db: State<Db>,
+    watcher: State<Watcher>,
+    filter: FilterView,
+) -> Result<(), String> {
     let stored = StoredFilter {
         id: filter.id,
         enabled: filter.enabled,
         cooldown_secs: filter.cooldown_secs,
         filter: Filter::try_from(filter.fields)?,
     };
-    filters::update(&db.lock().unwrap(), &stored).map_err(|e| e.to_string())
+    filters::update(&db.lock().unwrap(), &stored).map_err(|e| e.to_string())?;
+    reload_watcher(&db, &watcher)
 }
 
 #[tauri::command]
-pub fn delete_filter(db: State<Db>, id: i64) -> Result<(), String> {
-    filters::delete(&db.lock().unwrap(), id).map_err(|e| e.to_string())
+pub fn delete_filter(db: State<Db>, watcher: State<Watcher>, id: i64) -> Result<(), String> {
+    filters::delete(&db.lock().unwrap(), id).map_err(|e| e.to_string())?;
+    reload_watcher(&db, &watcher)
+}
+
+fn reload_watcher(db: &Db, watcher: &Watcher) -> Result<(), String> {
+    let all = filters::list(&db.lock().unwrap()).map_err(|e| e.to_string())?;
+    watcher.reload(all);
+    Ok(())
 }
 
 #[tauri::command]
@@ -175,15 +199,15 @@ pub async fn refresh_catalog(app: AppHandle) -> Result<CatalogStatus, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use nasua_core::model::{OrderType, Platform};
+    use nasua_core::model::OrderType;
 
     fn fields() -> FilterFields {
         FilterFields {
             item_id: "6322918add457f0072aeb8b1".into(),
             intent: "buy".into(),
             price_limit: 50,
-            platform: "pc".into(),
-            crossplay: true,
+            platform: None,
+            crossplay: None,
             rank_min: Some(7),
             rank_max: Some(10),
             subtype: None,
@@ -194,15 +218,16 @@ mod tests {
     #[test]
     fn reads_what_the_ui_sends() {
         let json = r#"{"itemId":"6322918add457f0072aeb8b1","intent":"buy","priceLimit":50,
-            "platform":"pc","crossplay":true,"rankMin":7,"rankMax":10}"#;
+            "rankMin":7,"rankMax":10}"#;
         let parsed: FilterFields = serde_json::from_str(json).unwrap();
         assert_eq!(parsed, fields());
     }
 
     #[test]
-    fn missing_status_defaults_to_ingame() {
+    fn left_out_fields_get_defaults() {
         let filter = Filter::try_from(fields()).unwrap();
         assert_eq!(filter.min_status, Status::Ingame);
+        assert!(filter.crossplay);
         assert_eq!(filter.intent, OrderType::Buy);
         assert_eq!(filter.platform, Platform::Pc);
         assert_eq!(filter.rank, Some(7..=10));
@@ -218,6 +243,8 @@ mod tests {
         };
         let view = FilterView::from(stored.clone());
         assert_eq!(view.fields.min_status.as_deref(), Some("ingame"));
+        assert_eq!(view.fields.platform.as_deref(), Some("pc"));
+        assert_eq!(view.fields.crossplay, Some(true));
         assert_eq!(Filter::try_from(view.fields).unwrap(), stored.filter);
     }
 
@@ -233,7 +260,7 @@ mod tests {
                 ..fields()
             },
             FilterFields {
-                platform: "stadia".into(),
+                platform: Some("stadia".into()),
                 ..fields()
             },
             FilterFields {
