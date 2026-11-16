@@ -1,6 +1,7 @@
 pub mod catalog;
 pub mod commands;
 pub mod storage;
+pub mod watcher;
 
 use std::sync::Mutex;
 
@@ -16,7 +17,10 @@ pub fn run() {
             let dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&dir)?;
             let conn = storage::open(&dir.join("nasuaframe.db"))?;
+            let watcher = watcher::Watcher::new(app.handle().clone());
+            watcher.reload(storage::filters::list(&conn)?);
             app.manage(Mutex::new(conn));
+            app.manage(watcher);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
