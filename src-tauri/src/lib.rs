@@ -1,15 +1,19 @@
 pub mod catalog;
 pub mod commands;
 pub mod storage;
+pub mod tray;
 pub mod watcher;
 
 use std::sync::Mutex;
 
-use tauri::Manager;
+use tauri::{Manager, WindowEvent};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            tray::show_window(app);
+        }))
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
@@ -22,7 +26,15 @@ pub fn run() {
             watcher.reload(storage::filters::list(&conn)?);
             app.manage(Mutex::new(conn));
             app.manage(watcher);
+            tray::create(app)?;
             Ok(())
+        })
+        // closing hides to the tray
+        .on_window_event(|window, event| {
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let _ = window.hide();
+            }
         })
         .invoke_handler(tauri::generate_handler![
             commands::list_filters,
