@@ -14,7 +14,7 @@ use crate::storage::filters::{
     status_text,
 };
 use crate::storage::items;
-use crate::watcher::Watcher;
+use crate::watcher::{BestLists, Watcher};
 
 pub type Db = Mutex<Connection>;
 
@@ -215,6 +215,11 @@ pub async fn refresh_catalog(app: AppHandle) -> Result<CatalogStatus, String> {
     })
     .await
     .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+pub fn list_best_orders(watcher: State<Watcher>) -> BestLists {
+    watcher.best_orders()
 }
 
 #[tauri::command]

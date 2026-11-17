@@ -4,13 +4,14 @@
   import { onMount } from "svelte";
   import {
     deleteFilter,
+    listBestOrders,
     listFilters,
-    onAlert,
+    onBestOrders,
     onFeedStatus,
     openLogFolder,
     refreshCatalog as fetchCatalog,
     updateFilter,
-    type Alert,
+    type BestOrder,
     type CatalogStatus,
     type FilterView,
   } from "#lib/api.ts";
@@ -125,14 +126,18 @@
     return `${platform}${crossplay}, ${statusNames[f.minStatus ?? "ingame"]}`;
   }
 
-  type Shown = Alert & { key: number; copied: boolean };
-  let alerts = $state<Shown[]>([]);
-  let alertKey = 0;
+  function details(order: BestOrder) {
+    const status = order.status === "ingame" ? "in game" : order.status;
+    return order.rank === null ? status : `${status}, rank ${order.rank}`;
+  }
 
-  async function copy(alert: Shown) {
+  let best = $state<Record<number, BestOrder[]>>({});
+  let copied = $state("");
+
+  async function copy(order: BestOrder) {
     try {
-      await navigator.clipboard.writeText(alert.whisper);
-      alert.copied = true;
+      await navigator.clipboard.writeText(order.whisper);
+      copied = order.id;
     } catch (e) {
       actionError = `Copy failed: ${e}`;
     }
@@ -149,14 +154,18 @@
   onMount(() => {
     refreshCatalog();
     const stops = [
-      onAlert((alert) => {
-        alerts = [{ ...alert, key: alertKey++, copied: false }, ...alerts].slice(0, 50);
+      onBestOrders(({ filterId, orders }) => {
+        if (orders) best[filterId] = orders;
+        else delete best[filterId];
       }),
       onFeedStatus(({ feed, problem }) => {
         if (problem) feedProblems[feed] = problem;
         else delete feedProblems[feed];
       }),
     ];
+    listBestOrders()
+      .then((lists) => (best = { ...lists, ...best }))
+      .catch((e) => (actionError = `Can't load the orders: ${e}`));
     return () => stops.forEach((stop) => stop.then((unlisten) => unlisten()));
   });
 </script>
@@ -209,48 +218,52 @@
       <ul class="list">
         {#each filters as filter (filter.id)}
           <li class="card" class:off={!filter.enabled}>
-            <div>
-              <strong>{describe(filter)}</strong>
-              <small>{where(filter)}</small>
+            <div class="line">
+              <div class="text">
+                <strong>{describe(filter)}</strong>
+                <small>{where(filter)}</small>
+              </div>
+              <div class="row">
+                <label>
+                  <input type="checkbox" checked={filter.enabled} onchange={() => toggle(filter)} />
+                  On
+                </label>
+                <button onclick={() => (editing = filter)}>Edit</button>
+                {#if confirmingDelete === filter.id}
+                  <button onclick={() => remove(filter.id)}>Really delete</button>
+                  <button onclick={() => (confirmingDelete = null)}>Keep</button>
+                {:else}
+                  <button onclick={() => (confirmingDelete = filter.id)}>Delete</button>
+                {/if}
+              </div>
             </div>
-            <div class="row">
-              <label>
-                <input type="checkbox" checked={filter.enabled} onchange={() => toggle(filter)} />
-                On
-              </label>
-              <button onclick={() => (editing = filter)}>Edit</button>
-              {#if confirmingDelete === filter.id}
-                <button onclick={() => remove(filter.id)}>Really delete</button>
-                <button onclick={() => (confirmingDelete = null)}>Keep</button>
+            {#if filter.enabled}
+              {@const orders = best[filter.id]}
+              {#if !orders}
+                <small>Looking for orders...</small>
+              {:else if orders.length}
+                <ul class="orders">
+                  {#each orders as order (order.id)}
+                    <li class="line">
+                      <div class="text">
+                        <span>{order.platinum}p, {order.trader}</span>
+                        <small>{details(order)}</small>
+                      </div>
+                      <button onclick={() => copy(order)}>
+                        {copied === order.id ? "Copied" : "Copy whisper"}
+                      </button>
+                    </li>
+                  {/each}
+                </ul>
               {:else}
-                <button onclick={() => (confirmingDelete = filter.id)}>Delete</button>
+                <small>No matching orders right now.</small>
               {/if}
-            </div>
+            {/if}
           </li>
         {/each}
       </ul>
     {:else if editing === undefined}
       <p>No filters yet.</p>
-    {/if}
-  </section>
-
-  <section>
-    <h2>Matches</h2>
-    {#if alerts.length}
-      <ul class="list">
-        {#each alerts as alert (alert.key)}
-          <li class="card">
-            <div>
-              <strong>{alert.itemName}, {alert.platinum}p</strong>
-              <small>{alert.trader}</small>
-              <code>{alert.whisper}</code>
-            </div>
-            <button onclick={() => copy(alert)}>{alert.copied ? "Copied" : "Copy whisper"}</button>
-          </li>
-        {/each}
-      </ul>
-    {:else}
-      <p>Nothing yet, matches show up here while the app is open.</p>
     {/if}
   </section>
 
@@ -301,15 +314,31 @@
 
   .list .card {
     display: flex;
+    flex-direction: column;
+    gap: 0.6em;
+  }
+
+  .line {
+    display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 1em;
   }
 
-  .list .card > div:first-child {
+  .text {
     display: flex;
     flex-direction: column;
     min-width: 0;
+  }
+
+  .orders {
+    list-style: none;
+    margin: 0;
+    padding: 0.6em 0 0;
+    border-top: 1px solid rgba(128, 128, 128, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4em;
   }
 
   footer {
@@ -318,11 +347,6 @@
 
   .off {
     opacity: 0.55;
-  }
-
-  code {
-    font-size: 0.85em;
-    overflow-wrap: anywhere;
   }
 
   :global(.card) {

@@ -5,6 +5,8 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 ## [Unreleased]
 
 - Every matching order notifies now, the per-filter cooldown was hiding other sellers' orders.
+- Each filter shows its best 5 orders right now, cheapest first when buying and highest first when selling. Orders already listed show up when the filter starts, and the list refreshes every 2 minutes so sold orders and offline traders drop out.
+- The separate Matches list is gone, the orders are under each filter.
 
 ## [0.1.0] - 2026-11-16
 
