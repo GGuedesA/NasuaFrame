@@ -35,13 +35,17 @@ export type FilterView = FilterFields & {
 
 export type CatalogStatus = { version: string | null; error: string | null };
 
-export type Alert = {
-  filterId: number;
-  itemName: string;
+export type BestOrder = {
+  id: string;
   platinum: number;
   trader: string;
+  status: Status;
+  rank: number | null;
   whisper: string;
 };
+
+/** orders null means the list is gone, the filter is off or reloading */
+export type BestOrders = { filterId: number; orders: BestOrder[] | null };
 
 export const listFilters = () => invoke<FilterView[]>("list_filters");
 export const addFilter = (filter: FilterFields) => invoke<number>("add_filter", { filter });
@@ -50,9 +54,10 @@ export const deleteFilter = (id: number) => invoke<void>("delete_filter", { id }
 export const searchItems = (query: string) => invoke<Item[]>("search_items", { query });
 export const refreshCatalog = () => invoke<CatalogStatus>("refresh_catalog");
 export const openLogFolder = () => invoke<void>("open_log_folder");
+export const listBestOrders = () => invoke<Record<number, BestOrder[]>>("list_best_orders");
 
-export const onAlert = (handler: (alert: Alert) => void): Promise<UnlistenFn> =>
-  listen<Alert>("alert", (event) => handler(event.payload));
+export const onBestOrders = (handler: (update: BestOrders) => void): Promise<UnlistenFn> =>
+  listen<BestOrders>("best-orders", (event) => handler(event.payload));
 /** problem null means the feed is connected */
 export type FeedStatus = { feed: string; problem: string | null };
 

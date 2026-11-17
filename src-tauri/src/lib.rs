@@ -51,6 +51,7 @@ pub fn run() {
             commands::delete_filter,
             commands::search_items,
             commands::refresh_catalog,
+            commands::list_best_orders,
             commands::open_log_folder,
         ])
         .run(tauri::generate_context!())
