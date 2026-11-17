@@ -5,13 +5,14 @@ use std::sync::{Arc, Mutex, RwLock};
 use std::time::{Duration, Instant};
 
 use nasua_core::matcher::matches;
-use nasua_core::model::{Order, Platform};
+use nasua_core::model::{Filter, Order, Platform};
 use nasua_core::whisper::build_whisper;
-use nasua_market::client;
+use nasua_market::{client, rest};
 use serde::Serialize;
 use tauri::async_runtime::{self, JoinHandle};
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_notification::NotificationExt;
+use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::commands::Db;
 use crate::storage::filters::{StoredFilter, platform_text};
@@ -23,6 +24,8 @@ type Feed = (Platform, bool);
 const FIRST_RETRY: Duration = Duration::from_secs(1);
 const MAX_RETRY: Duration = Duration::from_secs(60);
 const STABLE: Duration = Duration::from_secs(60);
+/// limitation stated by warframe.market api
+const REST_GAP: Duration = Duration::from_millis(350);
 
 /// problem None means connected
 #[derive(Debug, Clone, Serialize)]
@@ -46,21 +49,36 @@ pub struct Watcher {
     app: AppHandle,
     filters: Arc<RwLock<Vec<StoredFilter>>>,
     feeds: Mutex<HashMap<Feed, JoinHandle<()>>>,
+    snapshots: UnboundedSender<StoredFilter>,
 }
 
 impl Watcher {
     pub fn new(app: AppHandle) -> Self {
+        let filters = Arc::default();
+        let (snapshots, queue) = mpsc::unbounded_channel();
+        async_runtime::spawn(run_snapshots(queue, Arc::clone(&filters), app.clone()));
         Watcher {
             app,
-            filters: Arc::default(),
+            filters,
             feeds: Mutex::default(),
+            snapshots,
         }
     }
 
     /// call with every saved filter after any change
     pub fn reload(&self, all: Vec<StoredFilter>) {
         let wanted: HashSet<Feed> = all.iter().filter(|s| s.enabled).map(feed_of).collect();
-        *self.filters.write().unwrap() = all;
+        let started = {
+            let mut current = self.filters.write().unwrap();
+            let started = newly_started(&current, &all);
+            *current = all;
+            started
+        };
+        for stored in started {
+            if self.snapshots.send(stored).is_err() {
+                log::warn!("snapshot queue is gone, no current orders for new filters");
+            }
+        }
 
         let mut feeds = self.feeds.lock().unwrap();
         // a feed only ends by panicking, start it again below
@@ -83,6 +101,68 @@ impl Watcher {
 
 fn feed_of(stored: &StoredFilter) -> Feed {
     (stored.filter.platform, stored.filter.crossplay)
+}
+
+fn newly_started(old: &[StoredFilter], new: &[StoredFilter]) -> Vec<StoredFilter> {
+    new.iter()
+        .filter(|s| s.enabled && !old.contains(s))
+        .cloned()
+        .collect()
+}
+
+fn ranks_to_ask(filter: &Filter) -> Vec<Option<u8>> {
+    match &filter.rank {
+        Some(range) => range.clone().map(Some).collect(),
+        None => vec![None],
+    }
+}
+
+async fn run_snapshots(
+    mut queue: UnboundedReceiver<StoredFilter>,
+    filters: Arc<RwLock<Vec<StoredFilter>>>,
+    app: AppHandle,
+) {
+    while let Some(stored) = queue.recv().await {
+        let slug = {
+            let db = app.state::<Db>();
+            let conn = db.lock().unwrap();
+            items::get(&conn, &stored.filter.item_id)
+                .ok()
+                .flatten()
+                .map(|item| item.slug)
+        };
+        let Some(slug) = slug else {
+            log::warn!("filter {}: item not in the catalog, no snapshot", stored.id);
+            continue;
+        };
+        for rank in ranks_to_ask(&stored.filter) {
+            // edited or turned off while it waited
+            if !filters.read().unwrap().contains(&stored) {
+                break;
+            }
+            let (slug, filter) = (slug.clone(), stored.filter.clone());
+            let fetched = async_runtime::spawn_blocking(move || {
+                rest::fetch_top_orders(
+                    &slug,
+                    filter.platform,
+                    filter.crossplay,
+                    rank,
+                    filter.subtype.as_deref(),
+                )
+            })
+            .await;
+            match fetched {
+                Ok(Ok(orders)) => {
+                    for order in orders.iter().filter(|o| matches(&stored.filter, o)) {
+                        send_alerts(&app, &[stored.id], order, false);
+                    }
+                }
+                Ok(Err(e)) => log::warn!("filter {}: top orders failed: {e}", stored.id),
+                Err(e) => log::warn!("filter {}: top orders task failed: {e}", stored.id),
+            }
+            tokio::time::sleep(REST_GAP).await;
+        }
+    }
 }
 
 /// keeps one feed connected for as long as the app runs
@@ -125,7 +205,7 @@ async fn read_orders(
         };
         let due = due_filters(&filters.read().unwrap(), feed, &order);
         if !due.is_empty() {
-            send_alerts(app, &due, &order);
+            send_alerts(app, &due, &order, true);
         }
     }
     "connection closed".into()
@@ -146,7 +226,7 @@ fn due_filters(filters: &[StoredFilter], feed: Feed, order: &Order) -> Vec<i64> 
         .collect()
 }
 
-fn send_alerts(app: &AppHandle, filter_ids: &[i64], order: &Order) {
+fn send_alerts(app: &AppHandle, filter_ids: &[i64], order: &Order, notify_user: bool) {
     let name = {
         let db = app.state::<Db>();
         let conn = db.lock().unwrap();
@@ -171,7 +251,9 @@ fn send_alerts(app: &AppHandle, filter_ids: &[i64], order: &Order) {
             log::warn!("alert not sent to the ui: {e}");
         }
     }
-    notify(app, &name, order);
+    if notify_user {
+        notify(app, &name, order);
+    }
 }
 
 /// sent from here, a hidden window may not run its js in time
@@ -216,7 +298,7 @@ fn report(app: &AppHandle, feed: Feed, problem: Option<String>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use nasua_core::model::{Filter, OrderType, Status, Trader};
+    use nasua_core::model::{OrderType, Status, Trader};
 
     const PC: Feed = (Platform::Pc, true);
 
@@ -252,6 +334,27 @@ mod tests {
                 status: Status::Ingame,
             },
         }
+    }
+
+    #[test]
+    fn only_new_or_changed_enabled_filters_start() {
+        let same = stored(1);
+        let mut repriced = stored(2);
+        let mut turned_off = stored(4);
+        let old = [same.clone(), repriced.clone(), turned_off.clone()];
+        repriced.filter.price_limit = 30;
+        turned_off.enabled = false;
+        let new = [same, repriced, stored(3), turned_off];
+        let ids: Vec<i64> = newly_started(&old, &new).iter().map(|s| s.id).collect();
+        assert_eq!(ids, [2, 3]);
+    }
+
+    #[test]
+    fn a_rank_range_asks_each_rank() {
+        let mut filter = stored(1).filter;
+        assert_eq!(ranks_to_ask(&filter), [None]);
+        filter.rank = Some(8..=10);
+        assert_eq!(ranks_to_ask(&filter), [Some(8), Some(9), Some(10)]);
     }
 
     #[test]
