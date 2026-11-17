@@ -41,7 +41,6 @@ pub struct FilterFields {
 pub struct FilterView {
     pub id: i64,
     pub enabled: bool,
-    pub cooldown_secs: u32,
     #[serde(flatten)]
     pub fields: FilterFields,
     /// only sent to the ui, None if the item left the catalog
@@ -105,7 +104,6 @@ impl From<StoredFilter> for FilterView {
         FilterView {
             id: stored.id,
             enabled: stored.enabled,
-            cooldown_secs: stored.cooldown_secs,
             item: None,
             fields: FilterFields {
                 intent: intent_text(f.intent).into(),
@@ -172,7 +170,6 @@ pub fn update_filter(
     let stored = StoredFilter {
         id: filter.id,
         enabled: filter.enabled,
-        cooldown_secs: filter.cooldown_secs,
         filter: Filter::try_from(filter.fields)?,
     };
     filters::update(&db.lock().unwrap(), &stored).map_err(|e| e.to_string())?;
@@ -270,7 +267,6 @@ mod tests {
         let stored = StoredFilter {
             id: 3,
             enabled: false,
-            cooldown_secs: 120,
             filter: Filter::try_from(fields()).unwrap(),
         };
         let view = FilterView::from(stored.clone());

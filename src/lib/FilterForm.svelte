@@ -32,7 +32,6 @@
       platform: f?.platform ?? ("pc" as Platform),
       crossplay: f?.crossplay ?? true,
       minStatus: f?.minStatus ?? ("ingame" as Status),
-      cooldownSecs: f?.cooldownSecs ?? 60,
     };
   }
   let form = $state(initial());
@@ -71,7 +70,6 @@
     const ranked = item.maxRank !== null && !form.anyRank;
     if (ranked && !(isWhole(form.rankMin) && isWhole(form.rankMax)))
       return void (error = "Ranks must be whole numbers");
-    if (!isWhole(form.cooldownSecs)) return void (error = "Seconds must be a whole number");
 
     const fields: FilterFields = {
       itemId: item.id,
@@ -88,7 +86,7 @@
     error = "";
     try {
       if (editing) {
-        await updateFilter({ ...editing, ...fields, cooldownSecs: form.cooldownSecs });
+        await updateFilter({ ...editing, ...fields });
       } else {
         await addFilter(fields);
       }
@@ -195,13 +193,6 @@
       <option value="offline">Anyone, even offline</option>
     </select>
   </div>
-
-  {#if editing}
-    <div class="field">
-      <label for="cooldown">Seconds between alerts</label>
-      <input id="cooldown" type="number" min="0" step="1" bind:value={form.cooldownSecs} />
-    </div>
-  {/if}
 
   {#if error}<p class="error" role="alert">{error}</p>{/if}
 

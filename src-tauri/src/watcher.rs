@@ -87,7 +87,6 @@ fn feed_of(stored: &StoredFilter) -> Feed {
 
 /// keeps one feed connected for as long as the app runs
 async fn run_feed(feed: Feed, filters: Arc<RwLock<Vec<StoredFilter>>>, app: AppHandle) {
-    let mut last_alert = HashMap::new();
     let mut failures = 0;
     loop {
         let started = Instant::now();
@@ -95,7 +94,7 @@ async fn run_feed(feed: Feed, filters: Arc<RwLock<Vec<StoredFilter>>>, app: AppH
             Ok(mut stream) => {
                 log::info!("feed {} connected", feed_label(feed));
                 report(&app, feed, None);
-                read_orders(&mut stream, feed, &filters, &app, &mut last_alert).await
+                read_orders(&mut stream, feed, &filters, &app).await
             }
             Err(e) => e.to_string(),
         };
@@ -117,7 +116,6 @@ async fn read_orders(
     feed: Feed,
     filters: &RwLock<Vec<StoredFilter>>,
     app: &AppHandle,
-    last_alert: &mut HashMap<i64, Instant>,
 ) -> String {
     while let Some(next) = stream.next_order().await {
         let order = match next {
@@ -125,13 +123,7 @@ async fn read_orders(
             Err(client::Error::Parse(_)) => continue,
             Err(e) => return e.to_string(),
         };
-        let due = due_filters(
-            &filters.read().unwrap(),
-            feed,
-            &order,
-            last_alert,
-            Instant::now(),
-        );
+        let due = due_filters(&filters.read().unwrap(), feed, &order);
         if !due.is_empty() {
             send_alerts(app, &due, &order);
         }
@@ -145,29 +137,13 @@ fn retry_delay(failures: u32) -> Duration {
         .min(MAX_RETRY)
 }
 
-/// enabled filters on this feed that match and are past their cooldown
-fn due_filters(
-    filters: &[StoredFilter],
-    feed: Feed,
-    order: &Order,
-    last_alert: &mut HashMap<i64, Instant>,
-    now: Instant,
-) -> Vec<i64> {
-    let mut due = Vec::new();
-    for stored in filters {
-        if !stored.enabled || feed_of(stored) != feed || !matches(&stored.filter, order) {
-            continue;
-        }
-        let cooldown = Duration::from_secs(stored.cooldown_secs.into());
-        let ready = last_alert
-            .get(&stored.id)
-            .is_none_or(|&at| now.duration_since(at) >= cooldown);
-        if ready {
-            last_alert.insert(stored.id, now);
-            due.push(stored.id);
-        }
-    }
-    due
+/// enabled filters on this feed that match
+fn due_filters(filters: &[StoredFilter], feed: Feed, order: &Order) -> Vec<i64> {
+    filters
+        .iter()
+        .filter(|s| s.enabled && feed_of(s) == feed && matches(&s.filter, order))
+        .map(|s| s.id)
+        .collect()
 }
 
 fn send_alerts(app: &AppHandle, filter_ids: &[i64], order: &Order) {
@@ -248,7 +224,6 @@ mod tests {
         StoredFilter {
             id,
             enabled: true,
-            cooldown_secs: 60,
             filter: Filter {
                 item_id: "item".into(),
                 intent: OrderType::Buy,
@@ -288,14 +263,10 @@ mod tests {
     }
 
     #[test]
-    fn cooldown_holds_back_repeats() {
+    fn every_match_alerts() {
         let filters = [stored(1)];
-        let mut last = HashMap::new();
-        let start = Instant::now();
-        let at = |secs| start + Duration::from_secs(secs);
-        assert_eq!(due_filters(&filters, PC, &order(), &mut last, at(0)), [1]);
-        assert!(due_filters(&filters, PC, &order(), &mut last, at(59)).is_empty());
-        assert_eq!(due_filters(&filters, PC, &order(), &mut last, at(60)), [1]);
+        assert_eq!(due_filters(&filters, PC, &order()), [1]);
+        assert_eq!(due_filters(&filters, PC, &order()), [1]);
     }
 
     #[test]
@@ -309,7 +280,7 @@ mod tests {
         let mut too_cheap = stored(3);
         too_cheap.filter.price_limit = 30;
         let filters = [disabled, no_crossplay, too_cheap, stored(4)];
-        let due = due_filters(&filters, PC, &order(), &mut HashMap::new(), Instant::now());
+        let due = due_filters(&filters, PC, &order());
         assert_eq!(due, [4]);
     }
 }

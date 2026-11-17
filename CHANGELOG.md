@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+- Every matching order notifies now, the per-filter cooldown was hiding other sellers' orders.
+
 ## [0.1.0] - 2026-11-16
 
 First version for test.

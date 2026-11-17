@@ -30,7 +30,6 @@ export type FilterFields = {
 export type FilterView = FilterFields & {
   id: number;
   enabled: boolean;
-  cooldownSecs: number;
   item: Item | null;
 };
 

@@ -10,11 +10,10 @@ use super::Error;
 pub struct StoredFilter {
     pub id: i64,
     pub enabled: bool,
-    pub cooldown_secs: u32,
     pub filter: Filter,
 }
 
-/// new filters start enabled with the default cooldown, returns the new id
+/// new filters start enabled, returns the new id
 pub fn insert(conn: &Connection, filter: &Filter) -> Result<i64, Error> {
     let (rank_min, rank_max) = rank_columns(filter);
     conn.execute(
@@ -38,7 +37,7 @@ pub fn insert(conn: &Connection, filter: &Filter) -> Result<i64, Error> {
 
 pub fn list(conn: &Connection) -> Result<Vec<StoredFilter>, Error> {
     let mut query = conn.prepare(
-        "SELECT id, enabled, cooldown_secs, item_id, intent, price_limit, platform, crossplay,
+        "SELECT id, enabled, item_id, intent, price_limit, platform, crossplay,
                 rank_min, rank_max, subtype, min_status
          FROM filters ORDER BY id",
     )?;
@@ -50,14 +49,13 @@ pub fn update(conn: &Connection, stored: &StoredFilter) -> Result<(), Error> {
     let filter = &stored.filter;
     let (rank_min, rank_max) = rank_columns(filter);
     let changed = conn.execute(
-        "UPDATE filters SET enabled = ?2, cooldown_secs = ?3, item_id = ?4, intent = ?5,
-             price_limit = ?6, platform = ?7, crossplay = ?8, rank_min = ?9, rank_max = ?10,
-             subtype = ?11, min_status = ?12
+        "UPDATE filters SET enabled = ?2, item_id = ?3, intent = ?4, price_limit = ?5,
+             platform = ?6, crossplay = ?7, rank_min = ?8, rank_max = ?9, subtype = ?10,
+             min_status = ?11
          WHERE id = ?1",
         params![
             stored.id,
             stored.enabled,
-            stored.cooldown_secs,
             filter.item_id,
             intent_text(filter.intent),
             filter.price_limit,
@@ -93,7 +91,6 @@ fn rank_columns(filter: &Filter) -> (Option<u8>, Option<u8>) {
 struct RawRow {
     id: i64,
     enabled: bool,
-    cooldown_secs: u32,
     item_id: String,
     intent: String,
     price_limit: u32,
@@ -109,16 +106,15 @@ fn read_raw(row: &Row) -> rusqlite::Result<RawRow> {
     Ok(RawRow {
         id: row.get(0)?,
         enabled: row.get(1)?,
-        cooldown_secs: row.get(2)?,
-        item_id: row.get(3)?,
-        intent: row.get(4)?,
-        price_limit: row.get(5)?,
-        platform: row.get(6)?,
-        crossplay: row.get(7)?,
-        rank_min: row.get(8)?,
-        rank_max: row.get(9)?,
-        subtype: row.get(10)?,
-        min_status: row.get(11)?,
+        item_id: row.get(2)?,
+        intent: row.get(3)?,
+        price_limit: row.get(4)?,
+        platform: row.get(5)?,
+        crossplay: row.get(6)?,
+        rank_min: row.get(7)?,
+        rank_max: row.get(8)?,
+        subtype: row.get(9)?,
+        min_status: row.get(10)?,
     })
 }
 
@@ -139,7 +135,6 @@ impl TryFrom<RawRow> for StoredFilter {
         Ok(StoredFilter {
             id: raw.id,
             enabled: raw.enabled,
-            cooldown_secs: raw.cooldown_secs,
             filter: Filter {
                 item_id: raw.item_id,
                 intent: parse_intent(&raw.intent)
@@ -237,7 +232,6 @@ mod tests {
             [StoredFilter {
                 id,
                 enabled: true,
-                cooldown_secs: 60,
                 filter: filter()
             }]
         );
@@ -265,7 +259,6 @@ mod tests {
         let id = insert(&conn, &filter()).unwrap();
         let mut stored = list(&conn).unwrap().remove(0);
         stored.enabled = false;
-        stored.cooldown_secs = 300;
         stored.filter.price_limit = 40;
         update(&conn, &stored).unwrap();
         assert_eq!(list(&conn).unwrap(), [stored]);
@@ -281,7 +274,6 @@ mod tests {
         let ghost = StoredFilter {
             id: 99,
             enabled: true,
-            cooldown_secs: 60,
             filter: filter(),
         };
         assert!(matches!(update(&conn, &ghost), Err(Error::NotFound(99))));

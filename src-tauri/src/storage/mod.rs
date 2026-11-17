@@ -9,7 +9,10 @@ use std::path::Path;
 use rusqlite::Connection;
 
 /// append only, never edit one that already shipped
-const MIGRATIONS: &[&str] = &[include_str!("../../migrations/001_init.sql")];
+const MIGRATIONS: &[&str] = &[
+    include_str!("../../migrations/001_init.sql"),
+    include_str!("../../migrations/002_drop_cooldown.sql"),
+];
 
 #[derive(Debug)]
 pub enum Error {
@@ -86,6 +89,23 @@ mod tests {
             .query_row("PRAGMA user_version", [], |row| row.get(0))
             .unwrap();
         assert_eq!(version, MIGRATIONS.len() as i64);
+    }
+
+    #[test]
+    fn filters_from_0_1_0_survive_the_upgrade() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(MIGRATIONS[0]).unwrap();
+        conn.pragma_update(None, "user_version", 1).unwrap();
+        conn.execute(
+            "INSERT INTO filters (item_id, intent, price_limit, platform, crossplay, min_status, cooldown_secs)
+             VALUES ('item', 'buy', 40, 'pc', 1, 'ingame', 300)",
+            [],
+        )
+        .unwrap();
+        migrate(&mut conn).unwrap();
+        let kept = filters::list(&conn).unwrap();
+        assert_eq!(kept.len(), 1);
+        assert_eq!(kept[0].filter.price_limit, 40);
     }
 
     #[test]
