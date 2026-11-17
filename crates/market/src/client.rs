@@ -115,7 +115,7 @@ impl OrderStream {
     }
 }
 
-fn platform_slug(platform: Platform) -> &'static str {
+pub(crate) fn platform_slug(platform: Platform) -> &'static str {
     match platform {
         Platform::Pc => "pc",
         Platform::Ps4 => "ps4",

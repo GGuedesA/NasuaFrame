@@ -32,7 +32,7 @@ struct Envelope {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct WireOrder {
+pub(crate) struct WireOrder {
     id: String,
     item_id: String,
     #[serde(rename = "type")]

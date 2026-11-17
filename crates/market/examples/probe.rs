@@ -31,6 +31,20 @@ async fn main() -> Result<()> {
             None
         }
     };
+    if let Some(item) = &watched_item {
+        match rest::fetch_top_orders(&item.slug, Platform::Pc, true, None, None) {
+            Ok(top) => {
+                println!("top orders now: {}", top.len());
+                for order in &top {
+                    println!(
+                        "  {:?} {}p rank {:?} {:?}",
+                        order.order_type, order.platinum, order.rank, order.user.status
+                    );
+                }
+            }
+            Err(e) => println!("top orders failed: {e}"),
+        }
+    }
     let filter = watched_item.as_ref().map(|item| Filter {
         item_id: item.id.clone(),
         intent: OrderType::Buy,
