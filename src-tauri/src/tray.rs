@@ -2,16 +2,16 @@
 
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{App, AppHandle, Manager};
+use tauri::{App, AppHandle, Manager, Wry};
+
+use crate::text;
+
+const TRAY_ID: &str = "main";
 
 pub fn create(app: &App) -> tauri::Result<()> {
-    let show = MenuItem::with_id(app, "show", "Show", true, None::<&str>)?;
-    let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&show, &quit])?;
-
-    let mut tray = TrayIconBuilder::new()
+    let mut tray = TrayIconBuilder::with_id(TRAY_ID)
         .tooltip("NasuaFrame")
-        .menu(&menu)
+        .menu(&menu(app.handle())?)
         // left click shows the window, the menu is on right click
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {
@@ -34,6 +34,21 @@ pub fn create(app: &App) -> tauri::Result<()> {
     }
     tray.build(app)?;
     Ok(())
+}
+
+/// after a language change
+pub fn update_menu(app: &AppHandle) -> tauri::Result<()> {
+    if let Some(tray) = app.tray_by_id(TRAY_ID) {
+        tray.set_menu(Some(menu(app)?))?;
+    }
+    Ok(())
+}
+
+fn menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
+    let text = text::current(app);
+    let show = MenuItem::with_id(app, "show", text.show, true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", text.quit, true, None::<&str>)?;
+    Menu::with_items(app, &[&show, &quit])
 }
 
 pub fn show_window(app: &AppHandle) {

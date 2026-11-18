@@ -1,6 +1,7 @@
 pub mod catalog;
 pub mod commands;
 pub mod storage;
+pub mod text;
 pub mod tray;
 pub mod watcher;
 

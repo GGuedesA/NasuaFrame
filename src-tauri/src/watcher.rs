@@ -17,6 +17,7 @@ use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use crate::commands::Db;
 use crate::storage::filters::{StoredFilter, platform_text, status_text};
 use crate::storage::items;
+use crate::text;
 
 /// the stream is subscribed per platform + crossplay
 type Feed = (Platform, bool);
@@ -396,8 +397,9 @@ fn notify(app: &AppHandle, name: &str, order: &Order) {
         .builder()
         .title(format!("{name}, {}p", order.platinum))
         .body(format!(
-            "{} - open NasuaFrame to copy the whisper",
-            order.user.ingame_name
+            "{} - {}",
+            order.user.ingame_name,
+            text::current(app).open_to_copy
         ))
         .show();
     if let Err(e) = shown {

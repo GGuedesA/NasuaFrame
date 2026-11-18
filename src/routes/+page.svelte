@@ -4,6 +4,7 @@
   import { onMount } from "svelte";
   import {
     deleteFilter,
+    getSettings,
     listBestOrders,
     listFilters,
     onBestOrders,
@@ -16,6 +17,7 @@
     type FilterView,
   } from "#lib/api.ts";
   import FilterForm from "#lib/FilterForm.svelte";
+  import { setLanguage, t, type Key } from "#lib/i18n.svelte.ts";
   import SettingsForm from "#lib/SettingsForm.svelte";
   import { findUpdate, installUpdate } from "#lib/updater.ts";
 
@@ -34,15 +36,15 @@
 
   async function runUpdate() {
     if (!update) return;
-    updateStatus = "Downloading...";
+    updateStatus = t("update.downloading");
     try {
       await installUpdate(update, (done, total) => {
         updateStatus = total
-          ? `Downloading ${Math.round((done / total) * 100)}%`
-          : "Downloading...";
+          ? t("update.progress", { percent: Math.round((done / total) * 100) })
+          : t("update.downloading");
       });
     } catch (e) {
-      updateStatus = `Update failed: ${e}`;
+      updateStatus = t("update.failed", { error: String(e) });
     }
   }
 
@@ -100,36 +102,24 @@
     }
   }
 
-  const platformNames: Record<string, string> = {
-    pc: "PC",
-    ps4: "PlayStation",
-    xbox: "Xbox",
-    switch: "Switch",
-    mobile: "Mobile",
-  };
-  const statusNames: Record<string, string> = {
-    ingame: "in game",
-    online: "online+",
-    offline: "anyone",
-  };
-
   function describe(f: FilterView) {
-    const name = f.item?.name ?? `unknown item ${f.itemId}`;
-    const rank = f.rankMin === null ? "" : ` rank ${f.rankMin}-${f.rankMax}`;
-    const subtype = f.subtype ? ` (${f.subtype})` : "";
-    const price = f.intent === "buy" ? `max ${f.priceLimit}p` : `min ${f.priceLimit}p`;
-    return `${f.intent === "buy" ? "Buy" : "Sell"} ${name}${rank}${subtype}, ${price}`;
+    return t(f.intent === "buy" ? "filters.buy" : "filters.sell", {
+      item: f.item?.name ?? t("filters.unknownItem", { id: f.itemId }),
+      rank: f.rankMin === null ? "" : t("filters.rank", { min: f.rankMin, max: f.rankMax ?? "" }),
+      subtype: f.subtype ? ` (${f.subtype})` : "",
+      price: f.priceLimit,
+    });
   }
 
   function where(f: FilterView) {
-    const platform = platformNames[f.platform ?? "pc"];
-    const crossplay = f.crossplay ? " + crossplay" : "";
-    return `${platform}${crossplay}, ${statusNames[f.minStatus ?? "ingame"]}`;
+    const platform = t(`platform.${f.platform ?? "pc"}` as Key);
+    const crossplay = f.crossplay ? ` + ${t("crossplay")}` : "";
+    return `${platform}${crossplay}, ${t(`minStatus.${f.minStatus ?? "ingame"}` as Key)}`;
   }
 
   function details(order: BestOrder) {
-    const status = order.status === "ingame" ? "in game" : order.status;
-    return order.rank === null ? status : `${status}, rank ${order.rank}`;
+    const status = t(`status.${order.status}` as Key);
+    return order.rank === null ? status : t("orders.rank", { status, rank: order.rank });
   }
 
   let showSettings = $state(false);
@@ -141,7 +131,7 @@
       await navigator.clipboard.writeText(order.whisper);
       copied = order.id;
     } catch (e) {
-      actionError = `Copy failed: ${e}`;
+      actionError = t("orders.copyFailed", { error: String(e) });
     }
   }
 
@@ -149,11 +139,14 @@
     try {
       await openLogFolder();
     } catch (e) {
-      actionError = `Can't open the log folder: ${e}`;
+      actionError = t("logs.failed", { error: String(e) });
     }
   }
 
   onMount(() => {
+    getSettings()
+      .then((s) => setLanguage(s.language))
+      .catch((e) => console.error("settings not loaded", e));
     refreshCatalog();
     const stops = [
       onBestOrders(({ filterId, orders }) => {
@@ -167,7 +160,7 @@
     ];
     listBestOrders()
       .then((lists) => (best = { ...lists, ...best }))
-      .catch((e) => (actionError = `Can't load the orders: ${e}`));
+      .catch((e) => (actionError = t("orders.loadFailed", { error: String(e) })));
     return () => stops.forEach((stop) => stop.then((unlisten) => unlisten()));
   });
 </script>
@@ -175,15 +168,15 @@
 <main>
   {#if update}
     <p role="status">
-      Version {update.version} is available.
-      <button onclick={runUpdate} disabled={!!updateStatus}>Update now</button>
+      {t("update.available", { version: update.version })}
+      <button onclick={runUpdate} disabled={!!updateStatus}>{t("update.install")}</button>
       {updateStatus}
     </p>
   {/if}
   <div class="row heading">
     <h1>NasuaFrame {version}</h1>
     {#if !showSettings}
-      <button onclick={() => (showSettings = true)}>Settings</button>
+      <button onclick={() => (showSettings = true)}>{t("settings.open")}</button>
     {/if}
   </div>
 
@@ -199,17 +192,17 @@
 
   <p role="status">
     {#if !catalog}
-      Loading items...
+      {t("catalog.loading")}
     {:else if catalog.version}
-      Items ready{catalog.error ? " (offline, using the saved list)" : ""}
+      {t(catalog.error ? "catalog.offline" : "catalog.ready")}
     {:else}
-      Can't load items: {catalog.error}
-      <button onclick={refreshCatalog}>Retry</button>
+      {t("catalog.failed", { error: catalog.error ?? "" })}
+      <button onclick={refreshCatalog}>{t("catalog.retry")}</button>
     {/if}
   </p>
 
   {#each Object.entries(feedProblems) as [feed, problem] (feed)}
-    <p class="error" role="status">Order stream {feed}: {problem}</p>
+    <p class="error" role="status">{t("feed.problem", { feed, problem })}</p>
   {/each}
   {#if actionError}
     <p class="error" role="alert">{actionError}</p>
@@ -217,9 +210,11 @@
 
   <section>
     <div class="row heading">
-      <h2>Filters</h2>
+      <h2>{t("filters.title")}</h2>
       {#if editing === undefined}
-        <button onclick={() => (editing = null)} disabled={!catalog?.version}>Add filter</button>
+        <button onclick={() => (editing = null)} disabled={!catalog?.version}
+          >{t("filters.add")}</button
+        >
       {/if}
     </div>
 
@@ -243,21 +238,23 @@
               <div class="row">
                 <label>
                   <input type="checkbox" checked={filter.enabled} onchange={() => toggle(filter)} />
-                  On
+                  {t("filters.on")}
                 </label>
-                <button onclick={() => (editing = filter)}>Edit</button>
+                <button onclick={() => (editing = filter)}>{t("filters.edit")}</button>
                 {#if confirmingDelete === filter.id}
-                  <button onclick={() => remove(filter.id)}>Really delete</button>
-                  <button onclick={() => (confirmingDelete = null)}>Keep</button>
+                  <button onclick={() => remove(filter.id)}>{t("filters.reallyDelete")}</button>
+                  <button onclick={() => (confirmingDelete = null)}>{t("filters.keep")}</button>
                 {:else}
-                  <button onclick={() => (confirmingDelete = filter.id)}>Delete</button>
+                  <button onclick={() => (confirmingDelete = filter.id)}
+                    >{t("filters.delete")}</button
+                  >
                 {/if}
               </div>
             </div>
             {#if filter.enabled}
               {@const orders = best[filter.id]}
               {#if !orders}
-                <small>Looking for orders...</small>
+                <small>{t("orders.looking")}</small>
               {:else if orders.length}
                 <ul class="orders">
                   {#each orders as order (order.id)}
@@ -267,25 +264,25 @@
                         <small>{details(order)}</small>
                       </div>
                       <button onclick={() => copy(order)}>
-                        {copied === order.id ? "Copied" : "Copy whisper"}
+                        {t(copied === order.id ? "orders.copied" : "orders.copy")}
                       </button>
                     </li>
                   {/each}
                 </ul>
               {:else}
-                <small>No matching orders right now.</small>
+                <small>{t("orders.none")}</small>
               {/if}
             {/if}
           </li>
         {/each}
       </ul>
     {:else if editing === undefined}
-      <p>No filters yet.</p>
+      <p>{t("filters.none")}</p>
     {/if}
   </section>
 
   <footer>
-    <button onclick={showLogs}>Open log folder</button>
+    <button onclick={showLogs}>{t("logs.open")}</button>
   </footer>
 </main>
 
