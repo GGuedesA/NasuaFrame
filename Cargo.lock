@@ -2307,11 +2307,11 @@ dependencies = [
 
 [[package]]
 name = "nasua-core"
-version = "0.1.0"
+version = "0.1.1"
 
 [[package]]
 name = "nasua-market"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "futures-util",
  "nasua-core",
@@ -2325,7 +2325,7 @@ dependencies = [
 
 [[package]]
 name = "nasuaframe"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "log",
  "nasua-core",
