@@ -10,6 +10,7 @@
     type Platform,
     type Status,
   } from "#lib/api.ts";
+  import { t } from "#lib/i18n.svelte.ts";
 
   type Props = {
     editing: FilterView | null;
@@ -65,11 +66,11 @@
   async function save(event: SubmitEvent) {
     event.preventDefault();
     const item = form.item;
-    if (!item) return void (error = "Pick an item first");
-    if (!isWhole(form.priceLimit)) return void (error = "Price must be a whole number");
+    if (!item) return void (error = t("form.pickItem"));
+    if (!isWhole(form.priceLimit)) return void (error = t("form.wholePrice"));
     const ranked = item.maxRank !== null && !form.anyRank;
     if (ranked && !(isWhole(form.rankMin) && isWhole(form.rankMax)))
-      return void (error = "Ranks must be whole numbers");
+      return void (error = t("form.wholeRanks"));
 
     const fields: FilterFields = {
       itemId: item.id,
@@ -100,19 +101,19 @@
 </script>
 
 <form class="card" onsubmit={save}>
-  <h2>{editing ? "Edit filter" : "New filter"}</h2>
+  <h2>{t(editing ? "form.edit" : "form.new")}</h2>
 
   <div class="field">
-    <label for="item-search">Item</label>
+    <label for="item-search">{t("form.item")}</label>
     {#if form.item}
       <div class="picked">
         <strong>{form.item.name}</strong>
-        <button type="button" onclick={() => (form.item = null)}>Change</button>
+        <button type="button" onclick={() => (form.item = null)}>{t("form.change")}</button>
       </div>
     {:else}
       <input
         id="item-search"
-        placeholder="Type at least 2 letters"
+        placeholder={t("form.search")}
         autocomplete="off"
         bind:value={query}
         oninput={search}
@@ -128,30 +129,30 @@
   </div>
 
   <div class="field">
-    <span>I want to</span>
+    <span>{t("form.intent")}</span>
     <div class="row">
-      <label><input type="radio" value="buy" bind:group={form.intent} /> Buy</label>
-      <label><input type="radio" value="sell" bind:group={form.intent} /> Sell</label>
+      <label><input type="radio" value="buy" bind:group={form.intent} /> {t("form.buy")}</label>
+      <label><input type="radio" value="sell" bind:group={form.intent} /> {t("form.sell")}</label>
     </div>
   </div>
 
   <div class="field">
-    <label for="price">{form.intent === "buy" ? "Max price" : "Min price"} (platinum)</label>
+    <label for="price">{t(form.intent === "buy" ? "form.maxPrice" : "form.minPrice")}</label>
     <input id="price" type="number" min="0" step="1" bind:value={form.priceLimit} />
   </div>
 
   {#if form.item && form.item.maxRank !== null}
     <div class="field">
-      <span>Rank</span>
-      <label><input type="checkbox" bind:checked={form.anyRank} /> Any rank</label>
+      <span>{t("form.rank")}</span>
+      <label><input type="checkbox" bind:checked={form.anyRank} /> {t("form.anyRank")}</label>
       {#if !form.anyRank}
         <div class="row">
           <label>
-            From
+            {t("form.rankFrom")}
             <input type="number" min="0" max={form.item.maxRank} bind:value={form.rankMin} />
           </label>
           <label>
-            to
+            {t("form.rankTo")}
             <input type="number" min="0" max={form.item.maxRank} bind:value={form.rankMax} />
           </label>
         </div>
@@ -161,9 +162,9 @@
 
   {#if form.item && form.item.subtypes.length}
     <div class="field">
-      <label for="subtype">Subtype</label>
+      <label for="subtype">{t("form.subtype")}</label>
       <select id="subtype" bind:value={form.subtype}>
-        <option value="">Any</option>
+        <option value="">{t("form.anySubtype")}</option>
         {#each form.item.subtypes as subtype (subtype)}
           <option value={subtype}>{subtype}</option>
         {/each}
@@ -172,33 +173,33 @@
   {/if}
 
   <div class="field">
-    <label for="platform">Platform</label>
+    <label for="platform">{t("form.platform")}</label>
     <div class="row">
       <select id="platform" bind:value={form.platform}>
-        <option value="pc">PC</option>
-        <option value="ps4">PlayStation</option>
-        <option value="xbox">Xbox</option>
-        <option value="switch">Switch</option>
-        <option value="mobile">Mobile</option>
+        <option value="pc">{t("platform.pc")}</option>
+        <option value="ps4">{t("platform.ps4")}</option>
+        <option value="xbox">{t("platform.xbox")}</option>
+        <option value="switch">{t("platform.switch")}</option>
+        <option value="mobile">{t("platform.mobile")}</option>
       </select>
-      <label><input type="checkbox" bind:checked={form.crossplay} /> Crossplay</label>
+      <label><input type="checkbox" bind:checked={form.crossplay} /> {t("form.crossplay")}</label>
     </div>
   </div>
 
   <div class="field">
-    <label for="status">Trader at least</label>
+    <label for="status">{t("form.minStatus")}</label>
     <select id="status" bind:value={form.minStatus}>
-      <option value="ingame">In game</option>
-      <option value="online">Online</option>
-      <option value="offline">Anyone, even offline</option>
+      <option value="ingame">{t("form.ingame")}</option>
+      <option value="online">{t("form.online")}</option>
+      <option value="offline">{t("form.offline")}</option>
     </select>
   </div>
 
   {#if error}<p class="error" role="alert">{error}</p>{/if}
 
   <div class="row">
-    <button type="submit" disabled={saving}>Save</button>
-    <button type="button" onclick={oncancel}>Cancel</button>
+    <button type="submit" disabled={saving}>{t("save")}</button>
+    <button type="button" onclick={oncancel}>{t("cancel")}</button>
   </div>
 </form>
 

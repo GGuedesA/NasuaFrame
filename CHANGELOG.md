@@ -9,6 +9,7 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 - The separate Matches list is gone, the orders are under each filter.
 - Settings screen: language (English or Português) and whether closing the window keeps the app in the tray or quits it.
 - Item names follow the chosen language (English when an item has no translation). Whispers stay in English.
+- The app is available in Portuguese, including the tray menu and notifications.
 
 ## [0.1.0] - 2026-11-16
 

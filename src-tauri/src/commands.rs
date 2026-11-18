@@ -15,6 +15,7 @@ use crate::storage::filters::{
 };
 use crate::storage::items;
 use crate::storage::settings::{self, Settings};
+use crate::tray;
 use crate::watcher::{BestLists, Watcher};
 
 pub type Db = Mutex<Connection>;
@@ -229,11 +230,15 @@ pub fn get_settings(db: State<Db>) -> Result<Settings, String> {
 }
 
 #[tauri::command]
-pub fn save_settings(db: State<Db>, settings: Settings) -> Result<(), String> {
+pub fn save_settings(app: AppHandle, db: State<Db>, settings: Settings) -> Result<(), String> {
     if !nasua_market::rest::LANGUAGES.contains(&settings.language.as_str()) {
         return Err(format!("unknown language `{}`", settings.language));
     }
-    settings::save(&db.lock().unwrap(), &settings).map_err(|e| e.to_string())
+    settings::save(&db.lock().unwrap(), &settings).map_err(|e| e.to_string())?;
+    if let Err(e) = tray::update_menu(&app) {
+        log::warn!("tray menu not updated: {e}");
+    }
+    Ok(())
 }
 
 #[tauri::command]
