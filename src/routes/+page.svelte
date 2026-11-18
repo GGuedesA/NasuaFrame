@@ -16,6 +16,7 @@
     type FilterView,
   } from "#lib/api.ts";
   import FilterForm from "#lib/FilterForm.svelte";
+  import SettingsForm from "#lib/SettingsForm.svelte";
   import { findUpdate, installUpdate } from "#lib/updater.ts";
 
   let version = $state("");
@@ -131,6 +132,7 @@
     return order.rank === null ? status : `${status}, rank ${order.rank}`;
   }
 
+  let showSettings = $state(false);
   let best = $state<Record<number, BestOrder[]>>({});
   let copied = $state("");
 
@@ -178,7 +180,16 @@
       {updateStatus}
     </p>
   {/if}
-  <h1>NasuaFrame {version}</h1>
+  <div class="row heading">
+    <h1>NasuaFrame {version}</h1>
+    {#if !showSettings}
+      <button onclick={() => (showSettings = true)}>Settings</button>
+    {/if}
+  </div>
+
+  {#if showSettings}
+    <SettingsForm onclose={() => (showSettings = false)} />
+  {/if}
 
   <p role="status">
     {#if !catalog}

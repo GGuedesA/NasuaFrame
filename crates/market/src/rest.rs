@@ -14,6 +14,11 @@ use crate::events::WireOrder;
 
 const REST_BASE: &str = "https://api.warframe.market/v2";
 
+/// every language warframe.market has item names in
+pub const LANGUAGES: &[&str] = &[
+    "en", "ko", "ru", "de", "fr", "pt", "zh-hans", "zh-hant", "es", "it", "pl", "uk", "ja",
+];
+
 #[derive(Debug)]
 pub enum Error {
     Http(Box<ureq::Error>),

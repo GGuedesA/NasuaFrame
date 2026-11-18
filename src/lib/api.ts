@@ -47,6 +47,8 @@ export type BestOrder = {
 /** orders null means the list is gone, the filter is off or reloading */
 export type BestOrders = { filterId: number; orders: BestOrder[] | null };
 
+export type Settings = { language: string; closeToTray: boolean };
+
 export const listFilters = () => invoke<FilterView[]>("list_filters");
 export const addFilter = (filter: FilterFields) => invoke<number>("add_filter", { filter });
 export const updateFilter = (filter: FilterView) => invoke<void>("update_filter", { filter });
@@ -55,6 +57,8 @@ export const searchItems = (query: string) => invoke<Item[]>("search_items", { q
 export const refreshCatalog = () => invoke<CatalogStatus>("refresh_catalog");
 export const openLogFolder = () => invoke<void>("open_log_folder");
 export const listBestOrders = () => invoke<Record<number, BestOrder[]>>("list_best_orders");
+export const getSettings = () => invoke<Settings>("get_settings");
+export const saveSettings = (settings: Settings) => invoke<void>("save_settings", { settings });
 
 export const onBestOrders = (handler: (update: BestOrders) => void): Promise<UnlistenFn> =>
   listen<BestOrders>("best-orders", (event) => handler(event.payload));

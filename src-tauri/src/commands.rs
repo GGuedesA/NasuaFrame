@@ -14,6 +14,7 @@ use crate::storage::filters::{
     status_text,
 };
 use crate::storage::items;
+use crate::storage::settings::{self, Settings};
 use crate::watcher::{BestLists, Watcher};
 
 pub type Db = Mutex<Connection>;
@@ -220,6 +221,19 @@ pub async fn refresh_catalog(app: AppHandle) -> Result<CatalogStatus, String> {
 #[tauri::command]
 pub fn list_best_orders(watcher: State<Watcher>) -> BestLists {
     watcher.best_orders()
+}
+
+#[tauri::command]
+pub fn get_settings(db: State<Db>) -> Result<Settings, String> {
+    settings::load(&db.lock().unwrap()).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn save_settings(db: State<Db>, settings: Settings) -> Result<(), String> {
+    if !nasua_market::rest::LANGUAGES.contains(&settings.language.as_str()) {
+        return Err(format!("unknown language `{}`", settings.language));
+    }
+    settings::save(&db.lock().unwrap(), &settings).map_err(|e| e.to_string())
 }
 
 #[tauri::command]

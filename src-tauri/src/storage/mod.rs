@@ -2,6 +2,7 @@
 
 pub mod filters;
 pub mod items;
+pub mod settings;
 
 use std::fmt;
 use std::path::Path;
