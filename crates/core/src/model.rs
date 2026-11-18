@@ -64,6 +64,7 @@ pub struct Item {
     pub id: String,
     pub slug: String,
     pub name: String,
+    pub name_en: String,
     /// None for items without ranks
     pub max_rank: Option<u8>,
     /// relic refinements and such, empty for most items

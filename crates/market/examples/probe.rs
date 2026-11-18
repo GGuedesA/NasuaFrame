@@ -97,7 +97,7 @@ async fn main() -> Result<()> {
                     order.user.status,
                 );
                 if let (true, Some(item)) = (is_match, &watched_item) {
-                    println!("  {}", build_whisper(&order, &item.name));
+                    println!("  {}", build_whisper(&order, &item.name_en));
                 }
             }
         }
@@ -112,7 +112,7 @@ async fn main() -> Result<()> {
 /// loads the whole catalog, so this also tests `rest` against the live api
 fn find_item(slug: &str) -> Result<Item> {
     println!("catalog version: {}", rest::fetch_items_version()?);
-    let items = rest::fetch_items()?;
+    let items = rest::fetch_items("en")?;
     println!("catalog: {} items", items.len());
     items
         .into_iter()

@@ -49,8 +49,11 @@ impl From<serde_json::Error> for Error {
 }
 
 /// every tradable item, big download
-pub fn fetch_items() -> Result<Vec<Item>, Error> {
-    parse_items(&get("/items")?)
+pub fn fetch_items(language: &str) -> Result<Vec<Item>, Error> {
+    parse_items(
+        &read(request("/items").header("Language", language))?,
+        language,
+    )
 }
 
 /// changes whenever the catalog changes, compare it with the cached one before refetching
@@ -86,18 +89,20 @@ fn get(path: &str) -> Result<String, Error> {
 
 fn request(path: &str) -> ureq::RequestBuilder<ureq::typestate::WithoutBody> {
     crate::install_tls();
-    ureq::get(format!("{REST_BASE}{path}"))
-        .header("User-Agent", USER_AGENT)
-        .header("Language", "en")
+    ureq::get(format!("{REST_BASE}{path}")).header("User-Agent", USER_AGENT)
 }
 
 fn read(request: ureq::RequestBuilder<ureq::typestate::WithoutBody>) -> Result<String, Error> {
     Ok(request.call()?.body_mut().read_to_string()?)
 }
 
-fn parse_items(body: &str) -> Result<Vec<Item>, Error> {
+fn parse_items(body: &str, language: &str) -> Result<Vec<Item>, Error> {
     let envelope: Envelope<Vec<WireItem>> = serde_json::from_str(body)?;
-    Ok(envelope.data.into_iter().map(Item::from).collect())
+    Ok(envelope
+        .data
+        .into_iter()
+        .map(|w| item(w, language))
+        .collect())
 }
 
 fn parse_items_version(body: &str) -> Result<String, Error> {
@@ -149,20 +154,23 @@ struct WireCollections {
     items: String,
 }
 
-impl From<WireItem> for Item {
-    fn from(mut w: WireItem) -> Self {
-        // slug as a fallback so one item missing its name doesn't break the catalog
-        let name = w
-            .i18n
-            .remove("en")
-            .map_or_else(|| w.slug.clone(), |en| en.name);
-        Item {
-            id: w.id,
-            slug: w.slug,
-            name,
-            max_rank: w.max_rank,
-            subtypes: w.subtypes,
-        }
+fn item(mut w: WireItem, language: &str) -> Item {
+    // slug as a fallback so one item missing its name doesn't break the catalog
+    let name_en = w
+        .i18n
+        .remove("en")
+        .map_or_else(|| w.slug.clone(), |en| en.name);
+    let name = w
+        .i18n
+        .remove(language)
+        .map_or_else(|| name_en.clone(), |own| own.name);
+    Item {
+        id: w.id,
+        slug: w.slug,
+        name,
+        name_en,
+        max_rank: w.max_rank,
+        subtypes: w.subtypes,
     }
 }
 
@@ -182,13 +190,14 @@ mod tests {
 
     #[test]
     fn parses_items() {
-        let items = parse_items(ITEMS).unwrap();
+        let items = parse_items(ITEMS, "en").unwrap();
         assert_eq!(
             items[0],
             Item {
                 id: "6322918add457f0072aeb8b1".into(),
                 slug: "archon_intensify".into(),
                 name: "Archon Intensify".into(),
+                name_en: "Archon Intensify".into(),
                 max_rank: Some(10),
                 subtypes: vec![],
             }
@@ -202,8 +211,24 @@ mod tests {
 
     #[test]
     fn missing_name_falls_back_to_slug() {
-        let items = parse_items(ITEMS).unwrap();
+        let items = parse_items(ITEMS, "en").unwrap();
         assert_eq!(items[2].name, "no_name_item");
+        assert_eq!(items[2].name_en, "no_name_item");
+    }
+
+    #[test]
+    fn other_language_keeps_the_english_name() {
+        let body = r#"{"apiVersion":"0.25.0","data":[
+            {"id":"000000000000000000000001","slug":"secura_dual_cestra","tags":[],
+             "i18n":{"en":{"name":"Secura Dual Cestra"},"pt":{"name":"Cestras Duplas Secura"}}},
+            {"id":"000000000000000000000002","slug":"creeping_bullseye","tags":[],
+             "i18n":{"en":{"name":"Creeping Bullseye"}}}
+        ]}"#;
+        let items = parse_items(body, "pt").unwrap();
+        assert_eq!(items[0].name, "Cestras Duplas Secura");
+        assert_eq!(items[0].name_en, "Secura Dual Cestra");
+        assert_eq!(items[1].name, "Creeping Bullseye");
+        assert_eq!(items[1].name_en, "Creeping Bullseye");
     }
 
     #[test]
@@ -251,7 +276,7 @@ mod tests {
     #[test]
     fn broken_body_is_an_error() {
         assert!(matches!(
-            parse_items("<html>blocked</html>"),
+            parse_items("<html>blocked</html>", "en"),
             Err(Error::Parse(_))
         ));
     }

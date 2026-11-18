@@ -13,6 +13,7 @@ use rusqlite::Connection;
 const MIGRATIONS: &[&str] = &[
     include_str!("../../migrations/001_init.sql"),
     include_str!("../../migrations/002_drop_cooldown.sql"),
+    include_str!("../../migrations/003_item_english_name.sql"),
 ];
 
 #[derive(Debug)]
@@ -107,6 +108,22 @@ mod tests {
         let kept = filters::list(&conn).unwrap();
         assert_eq!(kept.len(), 1);
         assert_eq!(kept[0].filter.price_limit, 40);
+    }
+
+    #[test]
+    fn cached_items_from_0_1_0_get_their_english_name() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(MIGRATIONS[0]).unwrap();
+        conn.pragma_update(None, "user_version", 1).unwrap();
+        conn.execute(
+            "INSERT INTO items (id, slug, name, max_rank, subtypes)
+             VALUES ('1', 'serration', 'Serration', 10, '[]')",
+            [],
+        )
+        .unwrap();
+        migrate(&mut conn).unwrap();
+        let item = items::get(&conn, "1").unwrap().unwrap();
+        assert_eq!(item.name_en, "Serration");
     }
 
     #[test]
