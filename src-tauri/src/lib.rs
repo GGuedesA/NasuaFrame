@@ -37,11 +37,18 @@ pub fn run() {
             tray::create(app)?;
             Ok(())
         })
-        // closing hides to the tray
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
-                api.prevent_close();
-                let _ = window.hide();
+                let db = window.state::<commands::Db>();
+                // a broken settings row still keeps the app alive in the tray
+                let to_tray =
+                    storage::settings::load(&db.lock().unwrap()).map_or(true, |s| s.close_to_tray);
+                if to_tray {
+                    api.prevent_close();
+                    let _ = window.hide();
+                } else {
+                    window.app_handle().exit(0);
+                }
             }
         })
         .invoke_handler(tauri::generate_handler![
@@ -52,6 +59,8 @@ pub fn run() {
             commands::search_items,
             commands::refresh_catalog,
             commands::list_best_orders,
+            commands::get_settings,
+            commands::save_settings,
             commands::open_log_folder,
         ])
         .run(tauri::generate_context!())
