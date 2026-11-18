@@ -188,7 +188,13 @@
   </div>
 
   {#if showSettings}
-    <SettingsForm onclose={() => (showSettings = false)} />
+    <SettingsForm
+      onsaved={() => {
+        showSettings = false;
+        refreshCatalog();
+      }}
+      oncancel={() => (showSettings = false)}
+    />
   {/if}
 
   <p role="status">

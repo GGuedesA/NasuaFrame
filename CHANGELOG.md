@@ -8,6 +8,7 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 - Each filter shows its best 5 orders right now, cheapest first when buying and highest first when selling. Orders already listed show up when the filter starts, and the list refreshes every 2 minutes so sold orders and offline traders drop out.
 - The separate Matches list is gone, the orders are under each filter.
 - Settings screen: language (English or Português) and whether closing the window keeps the app in the tray or quits it.
+- Item names follow the chosen language (English when an item has no translation). Whispers stay in English.
 
 ## [0.1.0] - 2026-11-16
 

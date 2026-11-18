@@ -1,8 +1,8 @@
 <script lang="ts">
   import { getSettings, saveSettings, type Settings } from "#lib/api.ts";
 
-  type Props = { onclose: () => void };
-  let { onclose }: Props = $props();
+  type Props = { onsaved: () => void; oncancel: () => void };
+  let { onsaved, oncancel }: Props = $props();
 
   // only languages with a ui translation, the rest would leave the app in english
   const languages = [
@@ -25,7 +25,7 @@
     error = "";
     try {
       await saveSettings(settings);
-      onclose();
+      onsaved();
     } catch (e) {
       error = String(e);
     } finally {
@@ -60,7 +60,7 @@
 
   <div class="row">
     <button type="submit" disabled={!settings || saving}>Save</button>
-    <button type="button" onclick={onclose}>Cancel</button>
+    <button type="button" onclick={oncancel}>Cancel</button>
   </div>
 </form>
 

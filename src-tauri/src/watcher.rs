@@ -240,7 +240,7 @@ async fn snapshot(
         for order in orders.iter().filter(|o| matches(&stored.filter, o)) {
             insert_best(
                 &mut fresh,
-                best_order(order, &item.name),
+                best_order(order, &item.name_en),
                 stored.filter.intent,
             );
         }
@@ -357,17 +357,17 @@ fn add_live_match(
     due: &[(i64, OrderType)],
     order: &Order,
 ) {
-    let name = {
+    let item = {
         let db = app.state::<Db>();
         let conn = db.lock().unwrap();
-        items::get(&conn, &order.item_id)
-            .ok()
-            .flatten()
-            .map(|item| item.name)
+        items::get(&conn, &order.item_id).ok().flatten()
     };
     // item missing from the cache, the id still tells the user something
-    let name = name.unwrap_or_else(|| order.item_id.clone());
-    let entry = best_order(order, &name);
+    let (name, name_en) = item.map_or_else(
+        || (order.item_id.clone(), order.item_id.clone()),
+        |item| (item.name, item.name_en),
+    );
+    let entry = best_order(order, &name_en);
     for &(filter_id, intent) in due {
         log::info!("match for filter {filter_id}: {name} {}p", order.platinum);
         let list = {
