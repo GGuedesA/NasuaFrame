@@ -1,5 +1,6 @@
 <script lang="ts">
   import { getVersion } from "@tauri-apps/api/app";
+  import { getCurrentWindow } from "@tauri-apps/api/window";
   import type { Update } from "@tauri-apps/plugin-updater";
   import { onMount } from "svelte";
   import {
@@ -19,6 +20,7 @@
   import FilterForm from "#lib/FilterForm.svelte";
   import { setLanguage, t, type Key } from "#lib/i18n.svelte.ts";
   import SettingsForm from "#lib/SettingsForm.svelte";
+  import Startup from "#lib/Startup.svelte";
   import { findUpdate, installUpdate } from "#lib/updater.ts";
 
   let version = $state("");
@@ -69,9 +71,14 @@
   let feedProblems = $state<Record<string, string>>({});
   let actionError = $state("");
 
+  let filtersLoaded = $state(false);
+  let settingsLoaded = $state<boolean | null>(null);
+  let starting = $state(true);
+
   async function loadFilters() {
     try {
       filters = await listFilters();
+      filtersLoaded = true;
       filterError = "";
     } catch (e) {
       filterError = String(e);
@@ -145,8 +152,14 @@
 
   onMount(() => {
     getSettings()
-      .then((s) => setLanguage(s.language))
-      .catch((e) => console.error("settings not loaded", e));
+      .then((s) => {
+        setLanguage(s.language);
+        settingsLoaded = true;
+      })
+      .catch((e) => {
+        settingsLoaded = false;
+        console.error("settings not loaded", e);
+      });
     refreshCatalog();
     const stops = [
       onBestOrders(({ filterId, orders }) => {
@@ -163,7 +176,32 @@
       .catch((e) => (actionError = t("orders.loadFailed", { error: String(e) })));
     return () => stops.forEach((stop) => stop.then((unlisten) => unlisten()));
   });
+  const appWindow = getCurrentWindow();
 </script>
+
+{#if starting}
+  <Startup
+    settings={settingsLoaded}
+    {catalog}
+    enabledFilters={filtersLoaded ? filters.filter((f) => f.enabled).length : null}
+    feedProblem={Object.keys(feedProblems).length > 0}
+    ondone={() => (starting = false)}
+  />
+{/if}
+
+<!-- close still goes through CloseRequested for the tray -->
+<div class="titlebar" data-tauri-drag-region>
+  <span data-tauri-drag-region>NasuaFrame</span>
+  <div class="controls">
+    <button aria-label={t("window.minimize")} onclick={() => appWindow.minimize()}>&#x2013;</button>
+    <button aria-label={t("window.maximize")} onclick={() => appWindow.toggleMaximize()}
+      >&#x25A1;</button
+    >
+    <button class="close" aria-label={t("window.close")} onclick={() => appWindow.close()}
+      >&#x2715;</button
+    >
+  </div>
+</div>
 
 <main>
   {#if update}
@@ -287,20 +325,43 @@
 </main>
 
 <style>
-  :root {
-    font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-    font-size: 16px;
-    line-height: 24px;
-    font-weight: 400;
+  .titlebar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 0.8em;
+    background: var(--titlebar-bg);
+    color: var(--titlebar-text);
+    font-size: 13px;
+    user-select: none;
+  }
 
-    color: #0f0f0f;
-    background-color: #f6f6f6;
+  .titlebar .controls {
+    display: flex;
+    height: 100%;
+  }
 
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    -webkit-text-size-adjust: 100%;
+  .titlebar .controls button {
+    width: 46px;
+    height: 100%;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    color: inherit;
+    padding: 0;
+  }
+
+  .titlebar .controls button:hover {
+    background: var(--titlebar-hover);
+  }
+
+  .titlebar .controls .close:hover {
+    background: var(--close-hover);
   }
 
   main {
@@ -349,7 +410,7 @@
     list-style: none;
     margin: 0;
     padding: 0.6em 0 0;
-    border-top: 1px solid rgba(128, 128, 128, 0.3);
+    border-top: 1px solid var(--divider);
     display: flex;
     flex-direction: column;
     gap: 0.4em;
@@ -361,77 +422,5 @@
 
   .off {
     opacity: 0.55;
-  }
-
-  :global(.card) {
-    background: #ffffff;
-    border-radius: 8px;
-    padding: 0.8em 1em;
-    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
-  }
-
-  :global(.row) {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.6em;
-  }
-
-  :global(.error) {
-    color: #c62828;
-  }
-
-  :global(input:not([type="checkbox"], [type="radio"])),
-  :global(select),
-  :global(button) {
-    border-radius: 8px;
-    border: 1px solid transparent;
-    padding: 0.5em 1em;
-    font-size: 1em;
-    font-family: inherit;
-    color: #0f0f0f;
-    background-color: #ffffff;
-    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-  }
-
-  :global(button) {
-    cursor: pointer;
-    font-weight: 500;
-  }
-
-  :global(button:hover:not(:disabled)) {
-    border-color: #396cd8;
-  }
-
-  :global(button:disabled) {
-    cursor: default;
-    opacity: 0.6;
-  }
-
-  :global(:focus-visible) {
-    outline: 2px solid #396cd8;
-    outline-offset: 2px;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      color: #f6f6f6;
-      background-color: #2f2f2f;
-    }
-
-    :global(.card) {
-      background: #3a3a3a;
-    }
-
-    :global(.error) {
-      color: #ff8a80;
-    }
-
-    :global(input:not([type="checkbox"], [type="radio"])),
-    :global(select),
-    :global(button) {
-      color: #ffffff;
-      background-color: #0f0f0f98;
-    }
   }
 </style>
