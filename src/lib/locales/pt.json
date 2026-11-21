@@ -86,5 +86,28 @@
   "settings.closeQuits": "Fecha o app",
 
   "save": "Salvar",
-  "cancel": "Cancelar"
+  "cancel": "Cancelar",
+
+  "window.minimize": "Minimizar",
+  "window.maximize": "Maximizar",
+  "window.close": "Fechar",
+
+  "startup.files": "ARQUIVOS",
+  "startup.filesTitle": "Verificando arquivos",
+  "startup.filesOk": "Configurações e banco de dados OK",
+  "startup.filesFailed": "Não foi possível ler as configurações",
+  "startup.catalog": "CATÁLOGO",
+  "startup.catalogTitle": "Carregando catálogo de itens",
+  "startup.catalogReady": "Itens atualizados",
+  "startup.catalogOffline": "Offline, usando a lista salva",
+  "startup.catalogFailed": "Não foi possível carregar os itens",
+  "startup.market": "MERCADO",
+  "startup.marketTitle": "Conectando ao mercado",
+  "startup.watching": "Filtros monitorados: {count}",
+  "startup.noFilters": "Nenhum filtro ainda",
+  "startup.feedProblem": "Problema no fluxo de ordens",
+  "startup.slow": "Ainda carregando, seguindo",
+  "startup.ready": "PRONTO",
+  "startup.readyTitle": "Tudo pronto",
+  "startup.skip": "PULAR"
 }

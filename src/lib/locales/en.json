@@ -86,5 +86,28 @@
   "settings.closeQuits": "Quits the app",
 
   "save": "Save",
-  "cancel": "Cancel"
+  "cancel": "Cancel",
+
+  "window.minimize": "Minimize",
+  "window.maximize": "Maximize",
+  "window.close": "Close",
+
+  "startup.files": "FILES",
+  "startup.filesTitle": "Checking files",
+  "startup.filesOk": "Settings and database OK",
+  "startup.filesFailed": "Can't read the settings",
+  "startup.catalog": "CATALOG",
+  "startup.catalogTitle": "Loading item catalog",
+  "startup.catalogReady": "Items up to date",
+  "startup.catalogOffline": "Offline, using the saved list",
+  "startup.catalogFailed": "Can't load items",
+  "startup.market": "MARKET",
+  "startup.marketTitle": "Connecting to the market",
+  "startup.watching": "Filters watched: {count}",
+  "startup.noFilters": "No filters yet",
+  "startup.feedProblem": "Order stream problem",
+  "startup.slow": "Still loading, moving on",
+  "startup.ready": "READY",
+  "startup.readyTitle": "All set",
+  "startup.skip": "SKIP"
 }
