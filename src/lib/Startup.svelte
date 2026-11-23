@@ -84,10 +84,6 @@
   }
 
   function curlUp(ms: number) {
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      curl = 1;
-      return Promise.resolve();
-    }
     return new Promise<void>((resolve) => {
       const start = performance.now();
       const frame = (now: number) => {
@@ -100,7 +96,7 @@
     });
   }
 
-  async function run() {
+  async function intro() {
     await sleep(300);
     nameIn = true;
     await sleep(300);
@@ -117,6 +113,16 @@
     await sleep(300);
     phase = "plate";
     await sleep(900);
+  }
+
+  async function run() {
+    // windows animation effects off, the intro would only flash its frames
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      curl = 1;
+      phase = "plate";
+    } else {
+      await intro();
+    }
     for (let i = 0; i < steps.length; i++) {
       if (finished) return;
       index = i;
@@ -499,7 +505,7 @@
   }
 
   .shutter.a {
-    clip-path: polygon(0 0, 100% 0, 100% 40%, 0 60%);
+    clip-path: polygon(0 0, 100% 0, 100% calc(40% + 1px), 0 calc(60% + 1px));
   }
 
   .shutter.b {
