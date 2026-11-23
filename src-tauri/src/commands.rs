@@ -234,6 +234,12 @@ pub fn save_settings(app: AppHandle, db: State<Db>, settings: Settings) -> Resul
     if !nasua_market::rest::LANGUAGES.contains(&settings.language.as_str()) {
         return Err(format!("unknown language `{}`", settings.language));
     }
+    if !settings::REFRESH_MINUTES.contains(&settings.refresh_minutes) {
+        return Err(format!(
+            "refresh every {} min is out of range",
+            settings.refresh_minutes
+        ));
+    }
     settings::save(&db.lock().unwrap(), &settings).map_err(|e| e.to_string())?;
     if let Err(e) = tray::update_menu(&app) {
         log::warn!("tray menu not updated: {e}");
