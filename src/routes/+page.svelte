@@ -18,9 +18,9 @@
     type FilterView,
   } from "#lib/api.ts";
   import { deal } from "#lib/deal.ts";
-  import Fern from "#lib/Fern.svelte";
   import FilterForm from "#lib/FilterForm.svelte";
   import { setLanguage, t, type Key } from "#lib/i18n.svelte.ts";
+  import Ornament from "#lib/Ornament.svelte";
   import SettingsForm from "#lib/SettingsForm.svelte";
   import Startup from "#lib/Startup.svelte";
   import { findUpdate, installUpdate } from "#lib/updater.ts";
@@ -222,9 +222,14 @@
   </div>
 </div>
 
-<div class="fern" aria-hidden="true"><Fern /></div>
-
 <div class="cockpit">
+  <Ornament name="symbols" />
+  <Ornament name="topright" />
+  <Ornament name="sidediv" />
+  <Ornament name="sidelow" />
+  <Ornament name="botleft" />
+  <Ornament name="botright" />
+
   <div class="bus">
     <div class="cell shrink" role="status">
       <span class="label">{t("startup.catalog")}</span>
@@ -238,7 +243,8 @@
         <button onclick={refreshCatalog}>{t("catalog.retry")}</button>
       {/if}
     </div>
-    <div class="cell" role="status">
+    <div class="cell market" role="status">
+      <Ornament name="topdiv" />
       <span class="label">{t("startup.market")}</span>
       {#if problems.length}
         <span class="value bad">{t("startup.feedProblem")}</span>
@@ -468,16 +474,6 @@
     background: var(--close-hover);
   }
 
-  .fern {
-    position: fixed;
-    right: -10vmin;
-    bottom: -2vmin;
-    width: min(60vmin, 460px);
-    transform: scaleX(-1);
-    opacity: 0.6;
-    pointer-events: none;
-  }
-
   .cockpit {
     position: relative;
     height: calc(100vh - 32px);
@@ -491,6 +487,7 @@
   }
 
   .bus {
+    position: relative;
     grid-column: 1 / -1;
     display: flex;
     border-bottom: 1px solid var(--hair);
@@ -512,6 +509,10 @@
 
   .cell > :not(.value) {
     flex: none;
+  }
+
+  .market {
+    position: relative;
   }
 
   .label {
@@ -562,10 +563,10 @@
   }
 
   .rail {
+    position: relative;
     display: flex;
     flex-direction: column;
     min-height: 0;
-    border-right: 1px solid var(--hair);
   }
 
   .rail-head {
@@ -738,9 +739,11 @@
 
   .logs {
     margin: 0.6em;
+    background: var(--bg);
   }
 
   .pane {
+    position: relative;
     min-width: 0;
     min-height: 0;
     overflow-y: auto;

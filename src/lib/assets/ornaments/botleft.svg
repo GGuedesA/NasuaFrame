@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150.15 142.75">
+<g class="traces">
+
+</g><g class="stems">
+<path d="M5.52 9.66 C5.98 11.15 7.47 15.52 8.28 18.62 C9.08 21.72 9.89 25.06 10.34 28.28 C10.8 31.49 11.49 34.71 11.03 37.93 C10.57 41.15 8.6 44.6 7.59 47.59 C6.57 50.57 5.08 53.56 4.97 55.86 C4.85 58.16 6.11 59.31 6.9 61.38 C7.68 63.45 8.62 65.75 9.66 68.28 C10.69 70.8 12.41 73.79 13.1 76.55 C13.79 79.31 13.79 82.07 13.79 84.83 C13.79 87.59 13.33 90.34 13.1 93.1 C12.87 95.86 12.76 98.62 12.41 101.38 C12.07 104.14 11.72 106.67 11.03 109.66 C10.34 112.64 8.92 116.55 8.28 119.31 C7.63 122.07 6.71 124.48 7.17 126.21 C7.63 127.93 10.39 129.08 11.03 129.66"/>
+<path d="M11.03 129.66 C11.95 130 14.25 130.34 16.55 131.72 C18.85 133.1 22.3 136.78 24.83 137.93 C27.36 139.08 28.97 138.74 31.72 138.62 C34.48 138.51 38.16 137.93 41.38 137.24 C44.6 136.55 47.82 135.24 51.03 134.48 C54.25 133.72 57.93 132.57 60.69 132.69 C63.45 132.8 65.29 133.72 67.59 135.17 C69.89 136.62 72.41 140.11 74.48 141.38 C76.55 142.64 78.16 142.53 80 142.76 C81.84 142.99 83.68 143.52 85.52 142.76 C87.36 142 88.74 139.7 91.03 138.21 C93.33 136.71 96.55 134.53 99.31 133.79 C102.07 133.06 104.83 133.56 107.59 133.79 C110.34 134.02 113.1 134.37 115.86 135.17 C118.62 135.98 121.15 137.47 124.14 138.62 C127.13 139.77 132.18 141.49 133.79 142.07"/>
+<path class="twig" d="M10.21 31.03 C10.69 30.92 12.62 30.46 13.1 30.34"/>
+<path class="twig" d="M8.97 21.38 C9.61 21.15 12.18 20.23 12.83 20"/>
+<path class="twig" d="M10.9 42.07 C11.38 41.95 13.31 41.49 13.79 41.38"/>
+<path class="twig" d="M19.31 130.34 C20 129.43 22.07 126.44 23.45 124.83 C24.83 123.22 26.9 121.38 27.59 120.69"/>
+<path class="twig" d="M104.83 133.79 C104.83 133.22 104.83 130.92 104.83 130.34"/>
+</g><g class="foliage">
+<use href="#orn-ivy" class="tone-a" transform="translate(12.83 20) rotate(-25) scale(0.466)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-b" transform="translate(13.1 31.03) rotate(12) scale(0.466)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-c" transform="translate(13.79 42.07) rotate(-1) scale(0.466)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-a" transform="translate(5.52 57.24) rotate(-14) scale(0.652)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-b" transform="translate(9.66 66.9) rotate(23) scale(0.652)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-c" transform="translate(18.62 73.79) rotate(10) scale(1.490)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-a" transform="translate(9.66 90.34) rotate(-3) scale(2.048)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-b" transform="translate(8.28 102.76) rotate(-16) scale(1.303)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-c" transform="translate(6.9 116.55) rotate(21) scale(1.303)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-a" transform="translate(8.28 134.48) rotate(8) scale(1.862)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-b" transform="translate(20 128.97) rotate(-5) scale(1.397)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-c" transform="translate(17.93 140) rotate(-18) scale(0.745)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-a" transform="translate(26.21 140) rotate(19) scale(0.652)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-b" transform="translate(35.17 134.48) rotate(6) scale(1.024)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-c" transform="translate(46.9 137.24) rotate(-7) scale(1.210)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-a" transform="translate(57.24 128.28) rotate(-20) scale(1.676)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-b" transform="translate(67.59 131.72) rotate(17) scale(0.372)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-c" transform="translate(75.17 137.93) rotate(4) scale(0.931)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-a" transform="translate(92.41 134.48) rotate(-9) scale(0.931)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-b" transform="translate(104.83 128.97) rotate(-22) scale(0.652)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-c" transform="translate(124.83 136.55) rotate(15) scale(0.372)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-a" transform="translate(27.59 120) rotate(2) scale(0.466)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-b" transform="translate(24.83 122.76) rotate(-11) scale(0.279)" opacity="0.86"/>
+</g>
+</svg>

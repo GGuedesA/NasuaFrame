@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 66.99 373">
+<g class="traces">
+<polyline points="42.62,0 42.62,8.97 37.24,15.17" stroke-width="0.88" opacity="0.62"/>
+<polyline points="44.55,0 44.55,8.97 38.62,14.9" stroke-width="0.88" opacity="0.26"/>
+<polyline points="46.48,0 46.48,8.97 39.72,15.59" stroke-width="0.88" opacity="0.62"/>
+<polyline points="50.76,0 50.76,15.72" stroke-width="0.88" opacity="0.62"/>
+<polyline points="56.55,0 56.55,8.97 51.72,16.28 48,17.24 48,94.76" stroke-width="0.88" opacity="0.62"/>
+<polyline points="52.69,16.28 52.69,63.45" stroke-width="0.88" opacity="0.62"/>
+<polyline points="44.28,15.17 44.28,26.21 47.86,28.28" stroke-width="0.88" opacity="0.62"/>
+<polyline points="37.24,24.55 43.31,29.52 43.31,45.93 37.24,52.14" stroke-width="0.88" opacity="0.62"/>
+<polyline points="39.86,31.45 39.86,45.93" stroke-width="1.3" opacity="0.9"/>
+<polyline points="42.48,55.86 42.48,336.55 41.24,339.59 38.62,341.52 36.69,344.83" stroke-width="0.88" opacity="0.62"/>
+<polyline points="6.21,70.07 35.17,70.07" stroke-width="0.88" opacity="0.62"/>
+<polyline points="45.52,94.76 50.48,94.76 50.48,99.72 45.52,99.72 45.52,94.76" stroke-width="0.88" opacity="0.62"/>
+<polyline points="29.66,364.14 30.62,361.38 33.1,359.59 34.76,358.76" stroke-width="1.3" opacity="0.9"/>
+<circle cx="39.59" cy="334.62" r="1.66" fill="none" stroke-width="0.88" opacity="0.26"/>
+<circle cx="33.1" cy="364.41" r="1.79" fill="none" stroke-width="0.88" opacity="0.62"/>
+<polyline points="33.1,366.34 33.1,368.97" stroke-width="0.88" opacity="0.26"/>
+</g><g class="stems">
+<path class="twig" d="M22.76 64.83 C23.68 65.01 26.64 66.07 28.28 65.93 C29.91 65.79 31.45 65.15 32.55 64 C33.66 62.85 34.51 59.86 34.9 59.03"/>
+<path class="twig" d="M52.69 60.69 C53.01 60.92 54.3 61.84 54.62 62.07"/>
+<path class="twig" d="M48 89.1 C48.41 88.97 50.07 88.41 50.48 88.28"/>
+<path class="twig" d="M56.55 4.14 C57.06 4.48 59.08 5.86 59.59 6.21"/>
+<path class="twig" d="M32.28 356.69 C32.55 356.92 33.49 357.98 33.93 358.07 C34.37 358.16 34.74 357.38 34.9 357.24"/>
+</g><g class="foliage">
+<use href="#orn-ivy" class="tone-a" transform="translate(22.9 64) rotate(-25) scale(0.410)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-b" transform="translate(28.14 62.9) rotate(12) scale(0.410)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-c" transform="translate(31.31 67.03) rotate(-1) scale(0.484)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-a" transform="translate(61.1 6.62) rotate(32) scale(0.517)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-b" transform="translate(55.45 60.14) rotate(-22) scale(0.402)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-c" transform="translate(54.34 63.86) rotate(58) scale(0.345)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-a" transform="translate(53.1 86.62) rotate(-22) scale(0.546)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-b" transform="translate(52.28 90.07) rotate(18) scale(0.402)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-c" transform="translate(27.59 351.72) rotate(232) scale(1.178)" opacity="0.86"/>
+</g>
+</svg>

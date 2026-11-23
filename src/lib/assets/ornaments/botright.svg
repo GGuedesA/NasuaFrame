@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 386.22 402.85">
+<g class="traces">
+<polyline points="386.21,51.17 338.9,98.76 338.9,330.48 312.41,357.38 99.31,357.38 53.79,402.9" stroke-width="1.3" opacity="0.9"/>
+<polyline points="386.21,63.59 348.97,100.83" stroke-width="1.3" opacity="0.9"/>
+<polyline points="348.41,89.1 348.41,333.93" stroke-width="1.3" opacity="0.9"/>
+<polyline points="386.21,120.14 356.97,149.1 356.97,327.03 316.14,369.79 315.86,375.31 160.69,375.31 133.79,402.9" stroke-width="1.3" opacity="0.9"/>
+<polyline points="337.93,118.07 330.62,127.03 330.62,342.21" stroke-width="0.88" opacity="0.62"/>
+<polyline points="111.03,357.1 119.31,348.41 324.14,348.41" stroke-width="0.88" opacity="0.62"/>
+<polyline points="89.66,366.76 317.24,366.76" stroke-width="0.88" opacity="0.62"/>
+<polyline points="68.28,402.9 101.38,367.03" stroke-width="0.88" opacity="0.62"/>
+<polyline points="339.31,357.38 357.24,357.38 357.24,375.31 339.31,375.31 339.31,357.38" stroke-width="1.3" opacity="0.9"/>
+<polyline points="326.21,345.66 339.31,357.38" stroke-width="0.88" opacity="0.62"/>
+<polyline points="156.14,347.72 156.14,322.9 329.66,150.48" stroke-width="0.88" opacity="0.26"/>
+<polyline points="165.52,348 172.41,337.38 191.17,317.79 214.76,317.79 311.45,220.83" stroke-width="0.88" opacity="0.26"/>
+<polyline points="220.69,348.41 327.59,239.45" stroke-width="0.88" opacity="0.26"/>
+<polyline points="304.41,348.41 330.07,322.07" stroke-width="0.88" opacity="0.62"/>
+</g><g class="stems">
+<path d="M377.93 12.55 C377.47 13.7 375.52 17.38 375.17 19.45 C374.83 21.52 375.17 22.9 375.86 24.97 C376.55 27.03 378.51 29.1 379.31 31.86 C380.11 34.62 380.69 38.3 380.69 41.52 C380.69 44.74 380 48.41 379.31 51.17 C378.62 53.93 377.59 55.89 376.55 58.07 C375.52 60.25 374.25 62.44 373.1 64.28 C371.95 66.11 370.34 67.26 369.66 69.1 C368.97 70.94 369.89 73.82 368.97 75.31 C368.05 76.8 366.32 77.84 364.14 78.07 C361.95 78.3 358.28 76.34 355.86 76.69 C353.45 77.03 351.03 78.87 349.66 80.14 C348.28 81.4 347.93 83.59 347.59 84.28"/>
+<path class="twig" d="M380.14 44.28 C379.2 44.97 375.43 47.72 374.48 48.41"/>
+<path class="twig" d="M370.34 67.72 C369.77 67.38 367.47 66 366.9 65.66"/>
+<path class="twig" d="M380.41 34.62 C380.57 34.39 381.22 33.47 381.38 33.24"/>
+<path class="twig" d="M375.17 18.76 C374.6 18.07 372.3 15.31 371.72 14.62"/>
+<path d="M332.41 176.69 C331.49 177.84 328.97 180.6 326.9 183.59 C324.83 186.57 321.84 190.71 320 194.62 C318.16 198.53 316.67 203.13 315.86 207.03 C315.06 210.94 314.94 214.16 315.17 218.07 C315.4 221.98 316.32 226.8 317.24 230.48 C318.16 234.16 319.31 237.15 320.69 240.14 C322.07 243.13 323.79 245.89 325.52 248.41 C327.24 250.94 329.2 253.01 331.03 255.31 C332.87 257.61 334.25 260.14 336.55 262.21 C338.85 264.28 342.87 265.66 344.83 267.72 C346.78 269.79 347.13 271.4 348.28 274.62 C349.43 277.84 350.23 283.59 351.72 287.03 C353.22 290.48 355.63 292.55 357.24 295.31 C358.85 298.07 360.11 301.06 361.38 303.59 C362.64 306.11 364.48 307.95 364.83 310.48 C365.17 313.01 364.71 315.77 363.45 318.76 C362.18 321.75 359.66 325.66 357.24 328.41 C354.83 331.17 351.95 332.55 348.97 335.31 C345.98 338.07 342.53 341.86 339.31 344.97 C336.09 348.07 332.64 350.94 329.66 353.93 C326.67 356.92 323.56 360.02 321.38 362.9 C319.2 365.77 318.39 368.64 316.55 371.17 C314.71 373.7 312.53 376.46 310.34 378.07 C308.16 379.68 306.21 380.71 303.45 380.83 C300.69 380.94 297.24 379.68 293.79 378.76 C290.34 377.84 286.21 376.69 282.76 375.31 C279.31 373.93 276.55 372.78 273.1 370.48 C269.66 368.18 265.52 364.62 262.07 361.52 C258.62 358.41 254.94 354.39 252.41 351.86 C249.89 349.33 248.74 347.84 246.9 346.34 C245.06 344.85 243.45 343.59 241.38 342.9 C239.31 342.21 237.01 341.63 234.48 342.21 C231.95 342.78 228.51 344.51 226.21 346.34 C223.91 348.18 222.53 350.94 220.69 353.24 C218.85 355.54 217.01 358.07 215.17 360.14 C213.33 362.21 211.49 364.05 209.66 365.66 C207.82 367.26 205.98 368.41 204.14 369.79 C202.3 371.17 199.54 373.24 198.62 373.93"/>
+<path d="M246.9 344.97 C245.52 343.82 241.38 339.56 238.62 338.07 C235.86 336.57 233.56 336.34 230.34 336 C227.13 335.66 222.76 335.66 219.31 336 C215.86 336.34 212.87 338.18 209.66 338.07 C206.44 337.95 202.99 336.11 200 335.31 C197.01 334.51 194.02 334.39 191.72 333.24 C189.43 332.09 187.82 329.68 186.21 328.41 C184.6 327.15 182.76 326.11 182.07 325.66"/>
+<path d="M325.52 252.55 C326.67 251.4 330.34 248.64 332.41 245.66 C334.48 242.67 335.86 237.61 337.93 234.62 C340 231.63 342.53 230.25 344.83 227.72 C347.13 225.2 349.2 222.21 351.72 219.45 C354.25 216.69 357.24 212.9 360 211.17 C362.76 209.45 366.9 209.45 368.28 209.1"/>
+<path d="M15.17 400.83 C16.55 400.25 20.46 397.72 23.45 397.38 C26.44 397.03 30.11 398.18 33.1 398.76 C36.09 399.33 38.62 400.94 41.38 400.83 C44.14 400.71 46.9 398.99 49.66 398.07 C52.41 397.15 55.63 396.05 57.93 395.31 C60.23 394.57 61.61 393.54 63.45 393.66 C65.29 393.77 68.05 395.61 68.97 396"/>
+<path class="twig" d="M326.9 253.93 C327.13 255.77 327.59 261.75 328.28 264.97 C328.97 268.18 329.2 270.94 331.03 273.24 C332.87 275.54 337.93 277.84 339.31 278.76"/>
+<path class="twig" d="M315.45 213.93 C316.21 213.82 318.44 212.78 320 213.24 C321.56 213.7 323.68 214.97 324.83 216.69 C325.98 218.41 326.67 220.83 326.9 223.59 C327.13 226.34 326.48 229.17 326.21 233.24 C325.93 237.31 325.4 245.54 325.24 248"/>
+<path class="twig" d="M306.21 196 C306.9 197.38 309.43 201.98 310.34 204.28 C311.26 206.57 311.49 208.87 311.72 209.79"/>
+<path class="twig" d="M310.34 230.48 C310.92 230.71 312.53 231.17 313.79 231.86 C315.06 232.55 317.24 234.16 317.93 234.62"/>
+<path class="twig" d="M351.72 198.76 C352.41 199.91 355.17 202.67 355.86 205.66 C356.55 208.64 355.86 214.85 355.86 216.69"/>
+<path class="twig" d="M347.59 226.34 C348.51 226.46 352.18 226.92 353.1 227.03"/>
+<path class="twig" d="M332.41 176.69 C332.53 174.85 332.99 167.49 333.1 165.66"/>
+<path class="twig" d="M322.07 197.38 C321.49 198.07 319.2 200.83 318.62 201.52"/>
+<path class="twig" d="M339.31 278.76 C340.23 278.53 343.91 277.61 344.83 277.38"/>
+<path class="twig" d="M328.28 271.86 C327.36 272.78 323.91 276 322.76 277.38 C321.61 278.76 321.61 279.68 321.38 280.14"/>
+<path class="twig" d="M351.72 287.03 C351.26 287.15 349.43 287.61 348.97 287.72"/>
+<path class="twig" d="M360 300.83 C360.69 299.91 363.1 296.92 364.14 295.31 C365.17 293.7 365.86 291.86 366.21 291.17"/>
+<path class="twig" d="M182.07 325.66 C181.61 324.97 179.77 322.21 179.31 321.52"/>
+<path class="twig" d="M184.83 327.72 C184.94 326.69 185.4 322.55 185.52 321.52"/>
+<path class="twig" d="M188.97 332.55 C188.39 333.13 186.09 335.43 185.52 336"/>
+<path class="twig" d="M209.66 338.07 C208.85 336.92 205.63 332.32 204.83 331.17"/>
+<path class="twig" d="M202.76 336.69 C202.07 337.61 199.31 341.29 198.62 342.21"/>
+<path class="twig" d="M220.69 353.24 C217.93 354.85 206.9 361.29 204.14 362.9"/>
+<path class="twig" d="M209.66 365.66 C208.74 366.8 205.06 371.4 204.14 372.55"/>
+<path class="twig" d="M198.62 373.93 C197.82 374.85 194.6 378.53 193.79 379.45"/>
+<path class="twig" d="M264.83 362.9 C264.94 360.83 265.4 352.55 265.52 350.48"/>
+<path class="twig" d="M273.1 371.17 C272.18 372.32 268.51 376.92 267.59 378.07"/>
+<path class="twig" d="M288.28 376.69 C287.93 378.07 286.55 383.59 286.21 384.97"/>
+<path class="twig" d="M302.07 380.83 C301.84 379.45 300.92 373.93 300.69 372.55"/>
+<path class="twig" d="M68.97 396 C69.2 394.85 70.11 390.25 70.34 389.1"/>
+<path class="twig" d="M60.69 394.34 C60.34 393.24 58.97 388.83 58.62 387.72"/>
+<path class="twig" d="M23.45 397.38 C23.1 396.69 21.72 393.93 21.38 393.24"/>
+<path class="twig" d="M27.59 398.07 C27.13 398.53 25.29 400.37 24.83 400.83"/>
+<path class="twig" d="M67.59 396 C68.62 393.93 72.64 386.8 73.79 383.59 C74.94 380.37 74.37 377.84 74.48 376.69"/>
+</g><g class="foliage">
+<use href="#orn-sprig" class="tone-a" transform="translate(306.9 197.38) rotate(-30) scale(1.559)" opacity="0.86"/>
+<use href="#orn-sprig" class="tone-b" transform="translate(310.34 231.17) rotate(-60) scale(0.960)" opacity="0.86"/>
+<use href="#orn-sprig" class="tone-c" transform="translate(366.62 208.41) rotate(70) scale(1.079)" opacity="0.86"/>
+<use href="#orn-sprig" class="tone-a" transform="translate(366.9 289.79) rotate(20) scale(0.960)" opacity="0.86"/>
+<use href="#orn-sprig" class="tone-b" transform="translate(204.14 329.79) rotate(10) scale(1.079)" opacity="0.86"/>
+<use href="#orn-sprig" class="tone-c" transform="translate(199.31 346.34) rotate(-30) scale(1.079)" opacity="0.86"/>
+<use href="#orn-sprig" class="tone-a" transform="translate(202.76 368.41) rotate(-40) scale(1.079)" opacity="0.86"/>
+<use href="#orn-sprig" class="tone-b" transform="translate(264.14 344.97) rotate(10) scale(1.199)" opacity="0.86"/>
+<use href="#orn-sprig" class="tone-c" transform="translate(266.9 380.83) rotate(-20) scale(0.720)" opacity="0.86"/>
+<use href="#orn-sprig" class="tone-a" transform="translate(286.21 386.34) rotate(0) scale(0.600)" opacity="0.86"/>
+<use href="#orn-sprig" class="tone-b" transform="translate(336.55 172.55) rotate(10) scale(0.720)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-c" transform="translate(372.69 48.41) rotate(-18) scale(0.838)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-a" transform="translate(349.66 76.69) rotate(19) scale(0.559)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-b" transform="translate(21.38 392.83) rotate(6) scale(0.559)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-c" transform="translate(24.83 400.83) rotate(-7) scale(0.372)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-a" transform="translate(58.62 387.03) rotate(-20) scale(0.931)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-b" transform="translate(71.03 391.86) rotate(17) scale(0.559)" opacity="0.86"/>
+<use href="#orn-ivy" class="tone-c" transform="translate(74.48 375.31) rotate(4) scale(0.596)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-a" transform="translate(371.03 13.93) rotate(270) scale(0.374)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-b" transform="translate(366.21 64.97) rotate(230) scale(0.661)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-c" transform="translate(380.28 33.24) rotate(180) scale(0.431)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-a" transform="translate(331.03 172.55) rotate(260) scale(0.718)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-b" transform="translate(333.1 164.97) rotate(250) scale(0.287)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-c" transform="translate(335.17 178.07) rotate(30) scale(0.316)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-a" transform="translate(324.14 197.38) rotate(10) scale(0.575)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-b" transform="translate(319.31 218.07) rotate(-35) scale(0.517)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-c" transform="translate(312.41 209.79) rotate(80) scale(0.517)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-a" transform="translate(352.41 197.38) rotate(210) scale(0.647)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-b" transform="translate(349.66 209.79) rotate(85) scale(1.006)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-c" transform="translate(353.79 226.34) rotate(-10) scale(0.431)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-a" transform="translate(353.1 229.1) rotate(0) scale(0.374)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-b" transform="translate(329.66 242.9) rotate(200) scale(0.431)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-c" transform="translate(336.55 249.79) rotate(0) scale(0.517)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-a" transform="translate(326.9 259.45) rotate(60) scale(0.575)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-b" transform="translate(337.93 278.76) rotate(260) scale(0.862)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-c" transform="translate(343.45 277.38) rotate(170) scale(0.503)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-a" transform="translate(321.38 280.14) rotate(-30) scale(0.431)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-b" transform="translate(325.52 280.14) rotate(70) scale(0.431)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-c" transform="translate(322.76 276) rotate(-40) scale(0.316)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-a" transform="translate(351.72 278.76) rotate(20) scale(0.374)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-b" transform="translate(354.48 287.03) rotate(30) scale(0.431)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-c" transform="translate(348.97 287.03) rotate(250) scale(0.374)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-a" transform="translate(178.34 322.9) rotate(140) scale(0.503)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-b" transform="translate(185.52 321.52) rotate(-60) scale(0.575)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-c" transform="translate(180 314.62) rotate(255) scale(0.345)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-a" transform="translate(185.52 336) rotate(-20) scale(0.431)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-b" transform="translate(195.86 342.21) rotate(180) scale(0.575)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-c" transform="translate(203.45 363.59) rotate(180) scale(0.575)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-a" transform="translate(193.79 379.45) rotate(0) scale(0.862)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-b" transform="translate(213.1 362.9) rotate(170) scale(0.517)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-c" transform="translate(271.72 377.38) rotate(20) scale(0.431)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-a" transform="translate(300 369.79) rotate(250) scale(0.316)" opacity="0.86"/>
+<use href="#orn-leaf" class="tone-b" transform="translate(301.38 372.55) rotate(20) scale(0.316)" opacity="0.86"/>
+</g>
+</svg>

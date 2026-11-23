@@ -33,6 +33,15 @@
   --titlebar-text: var(--plate);
   --titlebar-hover: rgba(255, 255, 255, 0.1);
   --close-hover: #e81123;
+
+  --orn-trace: #8f927f;
+  --orn-stem: #8a917c;
+  --orn-leaf-a: #84926f;
+  --orn-leaf-b: #76866a;
+  --orn-leaf-c: #97a184;
+  --orn-flower: #9ea78f;
+  --orn-flower-center: #6f7c62;
+  --orn-vein: var(--bg);
 }
 
 :root {
