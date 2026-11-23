@@ -226,14 +226,15 @@
 
 <div class="cockpit">
   <div class="bus">
-    <div class="cell" role="status">
+    <div class="cell shrink" role="status">
       <span class="label">{t("startup.catalog")}</span>
       {#if !catalog}
         <span class="value">{t("catalog.loading")}</span>
       {:else if catalog.version}
         <span class="value ok">{t(catalog.error ? "catalog.offline" : "catalog.ready")}</span>
       {:else}
-        <span class="value bad">{t("catalog.failed", { error: catalog.error ?? "" })}</span>
+        {@const failed = t("catalog.failed", { error: catalog.error ?? "" })}
+        <span class="value bad" title={failed}>{failed}</span>
         <button onclick={refreshCatalog}>{t("catalog.retry")}</button>
       {/if}
     </div>
@@ -246,7 +247,7 @@
       {/if}
     </div>
     {#if update}
-      <div class="cell" role="status">
+      <div class="cell shrink" role="status">
         <span class="value ok">{t("update.available", { version: update.version })}</span>
         <button class="primary" onclick={runUpdate} disabled={!!updateStatus}
           >{t("update.install")}</button
@@ -492,16 +493,25 @@
   .bus {
     grid-column: 1 / -1;
     display: flex;
-    flex-wrap: wrap;
     border-bottom: 1px solid var(--hair);
   }
 
   .cell {
+    flex: none;
     display: flex;
     align-items: center;
     gap: 0.8em;
     padding: 0.45em 0.9em;
     border-right: 1px solid var(--hair);
+  }
+
+  .cell.shrink {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .cell > :not(.value) {
+    flex: none;
   }
 
   .label {
@@ -513,7 +523,11 @@
   }
 
   .value {
+    min-width: 0;
+    overflow: hidden;
     font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .value.ok::before,
@@ -536,6 +550,7 @@
   }
 
   .settings {
+    flex: none;
     margin-left: auto;
     border: none;
     border-left: 1px solid var(--hair);
