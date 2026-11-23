@@ -17,6 +17,7 @@ use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use crate::commands::Db;
 use crate::storage::filters::{StoredFilter, platform_text, status_text};
 use crate::storage::items;
+use crate::storage::settings::{self, REFRESH_MINUTES};
 use crate::text;
 
 /// the stream is subscribed per platform + crossplay
@@ -27,8 +28,6 @@ const MAX_RETRY: Duration = Duration::from_secs(60);
 const STABLE: Duration = Duration::from_secs(60);
 /// limitation stated by warframe.market api
 const REST_GAP: Duration = Duration::from_millis(350);
-/// drops sold orders and sellers that went offline
-const REFRESH: Duration = Duration::from_secs(120);
 const BEST_KEPT: usize = 5;
 
 /// problem None means connected
@@ -172,7 +171,7 @@ async fn run_snapshots(
     best: Arc<Mutex<BestLists>>,
     app: AppHandle,
 ) {
-    let mut next_refresh = tokio::time::Instant::now() + REFRESH;
+    let mut next_refresh = tokio::time::Instant::now() + refresh_every(&app);
     loop {
         let (jobs, refresh) = match tokio::time::timeout_at(next_refresh, queue.recv()).await {
             Ok(Some(stored)) => (vec![stored], false),
@@ -183,9 +182,19 @@ async fn run_snapshots(
             snapshot(stored, &filters, &best, &app).await;
         }
         if refresh {
-            next_refresh = tokio::time::Instant::now() + REFRESH;
+            next_refresh = tokio::time::Instant::now() + refresh_every(&app);
         }
     }
+}
+
+/// drops sold orders and sellers that went offline
+fn refresh_every(app: &AppHandle) -> Duration {
+    let db = app.state::<Db>();
+    let minutes = settings::load(&db.lock().unwrap())
+        .unwrap_or_default()
+        .refresh_minutes
+        .clamp(*REFRESH_MINUTES.start(), *REFRESH_MINUTES.end());
+    Duration::from_secs(u64::from(minutes) * 60)
 }
 
 fn enabled(filters: &RwLock<Vec<StoredFilter>>) -> Vec<StoredFilter> {
@@ -254,18 +263,21 @@ async fn snapshot(
 }
 
 /// best price first, at most BEST_KEPT
-fn insert_best(list: &mut Vec<BestOrder>, order: BestOrder, intent: OrderType) {
+/// true when the order is new to the list and still in it after the cut
+fn insert_best(list: &mut Vec<BestOrder>, order: BestOrder, intent: OrderType) -> bool {
     let key = |o: &BestOrder| match intent {
         OrderType::Buy => i64::from(o.platinum),
         OrderType::Sell => -i64::from(o.platinum),
     };
     // the same order can come from the stream and a refresh
     if list.iter().any(|o| o.id == order.id) {
-        return;
+        return false;
     }
+    let id = order.id.clone();
     list.push(order);
     list.sort_by_key(key);
     list.truncate(BEST_KEPT);
+    list.iter().any(|o| o.id == id)
 }
 
 fn best_order(order: &Order, item_name: &str) -> BestOrder {
@@ -369,17 +381,22 @@ fn add_live_match(
         |item| (item.name, item.name_en),
     );
     let entry = best_order(order, &name_en);
+    let mut listed = false;
     for &(filter_id, intent) in due {
-        log::info!("match for filter {filter_id}: {name} {}p", order.platinum);
         let list = {
             let mut best = best.lock().unwrap();
             let list = best.entry(filter_id).or_default();
-            insert_best(list, entry.clone(), intent);
-            list.clone()
+            insert_best(list, entry.clone(), intent).then(|| list.clone())
         };
+        // worse than the five already listed, an alert would point at nothing
+        let Some(list) = list else { continue };
+        log::info!("match for filter {filter_id}: {name} {}p", order.platinum);
         emit_list(app, filter_id, Some(list));
+        listed = true;
     }
-    notify(app, &name, order);
+    if listed {
+        notify(app, &name, order);
+    }
 }
 
 /// sent from here, a hidden window may not run its js in time
@@ -533,6 +550,29 @@ mod tests {
         insert_best(&mut list, entry("TestTrader", 30), OrderType::Buy);
         insert_best(&mut list, entry("TestTrader", 25), OrderType::Buy);
         assert_eq!(prices(&list), [("TestTrader", 25), ("TestTrader", 30)]);
+    }
+
+    #[test]
+    fn an_order_worse_than_a_full_list_is_not_kept() {
+        let mut list = Vec::new();
+        for (i, p) in [8, 8, 9, 9, 9].into_iter().enumerate() {
+            assert!(insert_best(
+                &mut list,
+                entry(&format!("Test{i}"), p),
+                OrderType::Buy
+            ));
+        }
+        assert!(!insert_best(
+            &mut list,
+            entry("TestLate", 10),
+            OrderType::Buy
+        ));
+        assert!(!insert_best(&mut list, entry("Test0", 8), OrderType::Buy));
+        assert!(insert_best(
+            &mut list,
+            entry("TestCheap", 7),
+            OrderType::Buy
+        ));
     }
 
     #[test]

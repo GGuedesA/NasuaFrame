@@ -26,6 +26,12 @@
   "filters.rank": " rank {min}-{max}",
   "filters.unknownItem": "unknown item {id}",
 
+  "slot.buy": "BUY ≤ {price}p",
+  "slot.sell": "SELL ≥ {price}p",
+  "slot.scanning": "SCANNING",
+  "slot.lock": "LOCK",
+  "slot.idle": "OFF",
+
   "platform.pc": "PC",
   "platform.ps4": "PlayStation",
   "platform.xbox": "Xbox",
@@ -84,6 +90,8 @@
   "settings.close": "Closing the window",
   "settings.closeToTray": "Keeps watching from the tray",
   "settings.closeQuits": "Quits the app",
+  "settings.refresh": "Re-check the best orders every",
+  "settings.minutes": "{count} min",
 
   "save": "Save",
   "cancel": "Cancel",

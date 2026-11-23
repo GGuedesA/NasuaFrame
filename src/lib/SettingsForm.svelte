@@ -56,6 +56,21 @@
         <option value={false}>{t("settings.closeQuits")}</option>
       </select>
     </div>
+
+    <div class="field">
+      <label for="refresh">{t("settings.refresh")}</label>
+      <div class="row">
+        <input
+          id="refresh"
+          type="range"
+          min="1"
+          max="5"
+          step="1"
+          bind:value={settings.refreshMinutes}
+        />
+        <output for="refresh">{t("settings.minutes", { count: settings.refreshMinutes })}</output>
+      </div>
+    </div>
   {/if}
 
   {#if error}<p class="error" role="alert">{error}</p>{/if}

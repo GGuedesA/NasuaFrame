@@ -26,6 +26,12 @@
   "filters.rank": " rank {min}-{max}",
   "filters.unknownItem": "item desconhecido {id}",
 
+  "slot.buy": "COMPRA ≤ {price}p",
+  "slot.sell": "VENDA ≥ {price}p",
+  "slot.scanning": "BUSCANDO",
+  "slot.lock": "TRAVADO",
+  "slot.idle": "DESL.",
+
   "platform.pc": "PC",
   "platform.ps4": "PlayStation",
   "platform.xbox": "Xbox",
@@ -84,6 +90,8 @@
   "settings.close": "Ao fechar a janela",
   "settings.closeToTray": "Continua monitorando pela bandeja",
   "settings.closeQuits": "Fecha o app",
+  "settings.refresh": "Verificar as melhores ofertas a cada",
+  "settings.minutes": "{count} min",
 
   "save": "Salvar",
   "cancel": "Cancelar",

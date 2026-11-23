@@ -229,6 +229,11 @@
   .results button {
     width: 100%;
     text-align: left;
-    box-shadow: none;
+    border-color: transparent;
+    font-family: inherit;
+    font-size: 1em;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--text);
   }
 </style>

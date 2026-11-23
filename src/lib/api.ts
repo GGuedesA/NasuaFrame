@@ -47,7 +47,7 @@ export type BestOrder = {
 /** orders null means the list is gone, the filter is off or reloading */
 export type BestOrders = { filterId: number; orders: BestOrder[] | null };
 
-export type Settings = { language: string; closeToTray: boolean };
+export type Settings = { language: string; closeToTray: boolean; refreshMinutes: number };
 
 export const listFilters = () => invoke<FilterView[]>("list_filters");
 export const addFilter = (filter: FilterFields) => invoke<number>("add_filter", { filter });
