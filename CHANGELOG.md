@@ -4,6 +4,18 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-23
+
+- New main screen and startup screen.
+- Custom title bar.
+- Orders show how close they are to your price limit.
+- Only orders that make the top 5 notify now.
+- Refresh interval in settings, 1 to 5 minutes.
+- Ruin ornaments on the main screen.
+- Fixed the startup with Windows animations off.
+- Fixed long errors breaking the status bar.
+- Updated dependencies.
+
 ## [0.1.1] - 2026-11-18
 
 - Every matching order notifies now, the per-filter cooldown was hiding other sellers' orders.
