@@ -1,5 +1,6 @@
 pub mod catalog;
 pub mod commands;
+pub mod scan;
 pub mod storage;
 pub mod text;
 pub mod tray;

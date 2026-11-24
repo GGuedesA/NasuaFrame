@@ -2,4 +2,5 @@
 
 pub mod matcher;
 pub mod model;
+pub mod reward;
 pub mod whisper;
