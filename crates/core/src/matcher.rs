@@ -1,8 +1,5 @@
-//! Decides whether an order is worth an alert for a filter.
-
 use crate::model::{Filter, Order, OrderType, Trader};
 
-/// True when `order` satisfies every rule of `filter`
 pub fn matches(filter: &Filter, order: &Order) -> bool {
     order.item_id == filter.item_id
         && order.order_type == filter.intent.counterpart()
@@ -26,7 +23,7 @@ fn price_ok(filter: &Filter, platinum: u32) -> bool {
     }
 }
 
-/// Same platform always works, across platforms both sides need crossplay on
+/// across platforms both sides need crossplay on
 fn can_trade(filter: &Filter, trader: &Trader) -> bool {
     trader.platform == filter.platform || (filter.crossplay && trader.crossplay)
 }
