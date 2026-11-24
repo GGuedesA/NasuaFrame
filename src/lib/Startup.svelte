@@ -111,6 +111,7 @@
     spinning = true;
     seam = true;
     await sleep(300);
+    if (finished) return;
     phase = "plate";
     await sleep(900);
   }

@@ -1,11 +1,7 @@
-//! Builds the in-game whisper, in the same format as warframe.market's "copy" button.
-
 use crate::model::{Order, OrderType};
 
-/// The `/w` message the user pastes into Warframe chat to answer `order`
-/// `item_name` is the item's display name (e.g. "Archon Intensify")
+/// same text as the site's copy button
 pub fn build_whisper(order: &Order, item_name: &str) -> String {
-    // Answering a sell order means the user buys, and the other way round
     let action = match order.order_type {
         OrderType::Sell => "buy",
         OrderType::Buy => "sell",
@@ -55,7 +51,6 @@ mod tests {
 
     #[test]
     fn answering_a_sell_order() {
-        // name should be anon on tests aaaaaa
         let order = order(OrderType::Sell, "TestTrader", 35, Some(7));
         assert_eq!(
             build_whisper(&order, "Archon Intensify"),

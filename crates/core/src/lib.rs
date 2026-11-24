@@ -1,4 +1,4 @@
-//! Pure logic for NasuaFrame. This crate must never do I/O.
+//! pure logic, no i/o in this crate
 
 pub mod matcher;
 pub mod model;
