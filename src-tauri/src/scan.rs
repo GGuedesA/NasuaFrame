@@ -1,6 +1,5 @@
 use image::{GrayImage, RgbaImage, imageops};
 
-// measured on one 1360x716 shot at the default interface scale
 const NAMES_TOP: f32 = 0.37;
 const NAMES_BOTTOM: f32 = 0.44;
 const CARD_WIDTH: f32 = 0.2235;

@@ -49,6 +49,28 @@ pub fn untradable() -> impl Iterator<Item = Item> {
     })
 }
 
+#[derive(Debug, PartialEq)]
+pub enum LogEvent {
+    OwnReward(String),
+    GotRewards,
+    Closed,
+}
+
+pub fn log_event(line: &str) -> Option<LogEvent> {
+    let line = line.trim_end();
+    if let Some((_, path)) = line.split_once("VoidProjections: ") {
+        let (_, path) = path.split_once(" gets reward ")?;
+        return Some(LogEvent::OwnReward(path.replacen("/StoreItems", "", 1)));
+    }
+    if line.ends_with("ProjectionRewardChoice.lua: Got rewards") {
+        Some(LogEvent::GotRewards)
+    } else if line.ends_with("ProjectionRewardChoice.lua: Relic reward screen shut down") {
+        Some(LogEvent::Closed)
+    } else {
+        None
+    }
+}
+
 pub fn lowest_sell(orders: &[Order]) -> Option<u32> {
     orders
         .iter()
@@ -125,7 +147,6 @@ pub fn best_match<'a>(text: &str, items: &'a [Item]) -> Option<(&'a Item, f32)> 
         .map(|item| {
             let (name, name_en) = (normalize(&item.name), normalize(&item.name_en));
             let score = span_score(&words, &name).max(span_score(&words, &name_en));
-            // ash prime systems also scores 1.0 inside ash prime systems blueprint
             let whole = similarity(&text, &name).max(similarity(&text, &name_en));
             (item, score, whole)
         })
@@ -341,6 +362,36 @@ mod tests {
         let items = [item("Sistemas de Ash Prime", "Ash Prime Systems")];
         let (_, score) = best_match("Squad vote ends in 10", &items).unwrap();
         assert!(score < MIN_SCORE);
+    }
+
+    #[test]
+    fn log_lines_become_events() {
+        assert_eq!(
+            log_event(
+                "1001.952 Sys [Info]: VoidProjections: 000000000000000000000001 gets reward /Lotus/StoreItems/Types/Recipes/WarframeRecipes/LavosPrimeChassisBlueprint\r"
+            ),
+            Some(LogEvent::OwnReward(
+                "/Lotus/Types/Recipes/WarframeRecipes/LavosPrimeChassisBlueprint".into()
+            ))
+        );
+        assert_eq!(
+            log_event("1002.314 Script [Info]: ProjectionRewardChoice.lua: Got rewards"),
+            Some(LogEvent::GotRewards)
+        );
+        assert_eq!(
+            log_event(
+                "1017.321 Script [Info]: ProjectionRewardChoice.lua: Relic reward screen shut down"
+            ),
+            Some(LogEvent::Closed)
+        );
+        for other in [
+            "1001.952 Sys [Info]: VoidProjections: Client got reward info from 000000000000000000000001",
+            "1001.535 Sys [Info]: VoidProjections: OpenVoidProjectionRewardScreenRMI",
+            "1002.314 Script [Info]: ProjectionsCountdown.lua: Relic timer closed",
+            "",
+        ] {
+            assert_eq!(log_event(other), None);
+        }
     }
 
     #[test]
