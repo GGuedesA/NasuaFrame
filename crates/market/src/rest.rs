@@ -127,6 +127,9 @@ struct WireItem {
     id: String,
     slug: String,
     max_rank: Option<u8>,
+    ducats: Option<u16>,
+    #[serde(default)]
+    game_ref: String,
     #[serde(default)]
     subtypes: Vec<String>,
     #[serde(default)]
@@ -171,6 +174,8 @@ fn item(mut w: WireItem, language: &str) -> Item {
         name_en,
         max_rank: w.max_rank,
         subtypes: w.subtypes,
+        ducats: w.ducats,
+        game_ref: w.game_ref,
     }
 }
 
@@ -185,7 +190,9 @@ mod tests {
         {"id":"000000000000000000000002","slug":"neo_a1_relic","gameRef":"/y","tags":["relic"],
          "subtypes":["intact","exceptional","flawless","radiant"],
          "i18n":{"en":{"name":"Neo A1 Relic","icon":"b.png","thumb":"b.png"}}},
-        {"id":"000000000000000000000003","slug":"no_name_item","gameRef":"/z","tags":[]}
+        {"id":"000000000000000000000003","slug":"no_name_item","gameRef":"/z","tags":[]},
+        {"id":"000000000000000000000004","slug":"braton_prime_barrel","gameRef":"/Lotus/Types/Recipes/Weapons/WeaponParts/BratonPrimeBarrel",
+         "tags":["component","weapon","prime"],"ducats":15,"i18n":{"en":{"name":"Braton Prime Barrel"}}}
     ]}"#;
 
     #[test]
@@ -200,9 +207,16 @@ mod tests {
                 name_en: "Archon Intensify".into(),
                 max_rank: Some(10),
                 subtypes: vec![],
+                ducats: None,
+                game_ref: "/x".into(),
             }
         );
         assert_eq!(items[1].max_rank, None);
+        assert_eq!(items[3].ducats, Some(15));
+        assert_eq!(
+            items[3].game_ref,
+            "/Lotus/Types/Recipes/Weapons/WeaponParts/BratonPrimeBarrel"
+        );
         assert_eq!(
             items[1].subtypes,
             ["intact", "exceptional", "flawless", "radiant"]

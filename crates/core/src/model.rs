@@ -62,6 +62,8 @@ pub struct Item {
     pub max_rank: Option<u8>,
     /// relic refinements and such, empty for most items
     pub subtypes: Vec<String>,
+    pub ducats: Option<u16>,
+    pub game_ref: String,
 }
 
 /// `intent` is what the user wants, so a buy filter matches sell orders

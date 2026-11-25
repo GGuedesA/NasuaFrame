@@ -19,8 +19,8 @@ pub fn replace_all(
     tx.execute("DELETE FROM items", [])?;
     {
         let mut insert = tx.prepare(
-            "INSERT INTO items (id, slug, name, name_en, max_rank, subtypes)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            "INSERT INTO items (id, slug, name, name_en, max_rank, subtypes, ducats, game_ref)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
         )?;
         for item in items {
             let subtypes = serde_json::to_string(&item.subtypes)?;
@@ -30,7 +30,9 @@ pub fn replace_all(
                 item.name,
                 item.name_en,
                 item.max_rank,
-                subtypes
+                subtypes,
+                item.ducats,
+                item.game_ref
             ])?;
         }
     }
@@ -56,7 +58,7 @@ pub fn search(conn: &Connection, query: &str, limit: u32) -> Result<Vec<Item>, E
 pub fn get(conn: &Connection, id: &str) -> Result<Option<Item>, Error> {
     let found = conn
         .query_row(
-            "SELECT id, slug, name, name_en, max_rank, subtypes FROM items WHERE id = ?1",
+            "SELECT id, slug, name, name_en, max_rank, subtypes, ducats, game_ref FROM items WHERE id = ?1",
             [id],
             read_row,
         )
@@ -70,7 +72,7 @@ fn select(conn: &Connection, query: &str, limit: i64) -> Result<Vec<Item>, Error
         .replace('%', "\\%")
         .replace('_', "\\_");
     let mut stmt = conn.prepare(
-        "SELECT id, slug, name, name_en, max_rank, subtypes FROM items
+        "SELECT id, slug, name, name_en, max_rank, subtypes, ducats, game_ref FROM items
          WHERE name LIKE '%' || ?1 || '%' ESCAPE '\\' ORDER BY name LIMIT ?2",
     )?;
     let rows = stmt.query_map(params![escaped, limit], read_row)?;
@@ -86,6 +88,8 @@ fn read_row(row: &Row) -> rusqlite::Result<(Item, String)> {
         name_en: row.get(3)?,
         max_rank: row.get(4)?,
         subtypes: Vec::new(),
+        ducats: row.get(6)?,
+        game_ref: row.get(7)?,
     };
     Ok((item, row.get(5)?))
 }
@@ -126,21 +130,26 @@ mod tests {
             name_en: format!("{name} en"),
             max_rank,
             subtypes: subtypes.iter().map(|s| s.to_string()).collect(),
+            ducats: None,
+            game_ref: String::new(),
         }
     }
 
     #[test]
     fn round_trip() {
         let mut conn = open_in_memory().unwrap();
-        let items = vec![
+        let mut items = vec![
             item("1", "Archon Intensify", Some(10), &[]),
+            item("3", "Braton Prime Barrel", None, &[]),
             item("2", "Neo A1 Relic", None, &["intact", "radiant"]),
         ];
+        items[1].ducats = Some(15);
+        items[1].game_ref = "/Lotus/Types/Recipes/Weapons/WeaponParts/BratonPrimeBarrel".into();
         replace_all(&mut conn, &items, "v1", "pt").unwrap();
         assert_eq!(load_all(&conn).unwrap(), items);
         assert_eq!(cached_version(&conn).unwrap().as_deref(), Some("v1"));
         assert_eq!(cached_language(&conn).unwrap().as_deref(), Some("pt"));
-        assert_eq!(get(&conn, "2").unwrap().as_ref(), Some(&items[1]));
+        assert_eq!(get(&conn, "3").unwrap().as_ref(), Some(&items[1]));
         assert_eq!(get(&conn, "nope").unwrap(), None);
     }
 

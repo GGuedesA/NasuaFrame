@@ -14,6 +14,7 @@ const MIGRATIONS: &[&str] = &[
     include_str!("../../migrations/001_init.sql"),
     include_str!("../../migrations/002_drop_cooldown.sql"),
     include_str!("../../migrations/003_item_english_name.sql"),
+    include_str!("../../migrations/004_item_ducats_game_ref.sql"),
 ];
 
 #[derive(Debug)]
@@ -124,6 +125,22 @@ mod tests {
         migrate(&mut conn).unwrap();
         let item = items::get(&conn, "1").unwrap().unwrap();
         assert_eq!(item.name_en, "Serration");
+    }
+
+    #[test]
+    fn catalog_without_ducats_downloads_again() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        for sql in &MIGRATIONS[..3] {
+            conn.execute_batch(sql).unwrap();
+        }
+        conn.pragma_update(None, "user_version", 3).unwrap();
+        conn.execute(
+            "INSERT INTO meta (key, value) VALUES ('items_version', 'v1')",
+            [],
+        )
+        .unwrap();
+        migrate(&mut conn).unwrap();
+        assert_eq!(items::cached_version(&conn).unwrap(), None);
     }
 
     #[test]

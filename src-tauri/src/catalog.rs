@@ -87,6 +87,8 @@ mod tests {
             name_en: format!("Item {id}"),
             max_rank: None,
             subtypes: Vec::new(),
+            ducats: None,
+            game_ref: String::new(),
         }
     }
 

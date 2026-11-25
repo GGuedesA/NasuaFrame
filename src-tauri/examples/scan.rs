@@ -6,8 +6,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     use std::path::PathBuf;
     use std::time::{Duration, Instant};
 
-    use nasua_core::model::Item;
+    use nasua_core::model::{Item, Platform};
     use nasua_core::reward;
+    use nasua_market::rest;
     use nasuaframe_lib::{scan, storage};
 
     let mut args = std::env::args().skip(1);
@@ -33,7 +34,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         (None, Some(secs)) => {
             println!("capturing in {secs}s");
             std::thread::sleep(Duration::from_secs(secs));
-            scan::capture_primary()?
+            let shot = scan::capture_primary()?;
+            let name = format!(
+                "shot-{}.png",
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)?
+                    .as_secs()
+            );
+            shot.save(&name)?;
+            println!("saved {name}");
+            shot
         }
         _ => return Err("pass a png or --screen SECONDS".into()),
     };
@@ -66,7 +76,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     println!("\n");
 
-    let items: Vec<Item> = match list {
+    let mut items: Vec<Item> = match list {
         Some(path) => std::fs::read_to_string(path)?
             .lines()
             .filter(|l| !l.trim().is_empty())
@@ -79,6 +89,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     name_en: name_en.trim().to_string(),
                     max_rank: None,
                     subtypes: Vec::new(),
+                    ducats: None,
+                    game_ref: String::new(),
                 }
             })
             .collect(),
@@ -96,6 +108,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("no catalog yet, open the app once or pass --items");
         return Ok(());
     }
+    items.extend(reward::untradable());
 
     for card in reward::cards(&words) {
         if let Some((item, score)) = reward::best_match(&card, &items) {
@@ -108,6 +121,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "{mark} {score:.2}  {card:?} -> {} ({})",
                 item.name, item.name_en
             );
+            if score < reward::MIN_SCORE {
+                continue;
+            }
+            if item.slug.is_empty() {
+                println!("          untradable");
+                continue;
+            }
+            std::thread::sleep(Duration::from_millis(400));
+            let price = match rest::fetch_top_orders(&item.slug, Platform::Pc, true, None, None) {
+                Ok(orders) => reward::lowest_sell(&orders)
+                    .map_or("no sellers online".to_string(), |p| format!("{p}p")),
+                Err(e) => format!("price failed: {e}"),
+            };
+            let ducats = item.ducats.map_or("-".to_string(), |d| d.to_string());
+            println!("          {price}, {ducats} ducats");
         }
     }
     Ok(())

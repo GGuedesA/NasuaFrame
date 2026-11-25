@@ -1,4 +1,4 @@
-use crate::model::Item;
+use crate::model::{Item, Order, OrderType};
 
 pub const MIN_SCORE: f32 = 0.74;
 
@@ -11,8 +11,50 @@ pub struct Word {
     pub height: f32,
 }
 
+pub const UNTRADABLE: &[&str] = &[
+    "Forma Blueprint",
+    "2X Forma Blueprint",
+    "Exilus Weapon Adapter Blueprint",
+    "1200X Kuva",
+    "Riven Sliver",
+];
+
+const NO_DUCATS: &[&str] = &[
+    "Ayatan Amber Star",
+    "Fass",
+    "Jahu",
+    "Khra",
+    "Lohk",
+    "Netra",
+    "Ris",
+    "Vome",
+    "Xata",
+];
+
 pub fn is_relic_reward(item: &Item) -> bool {
-    item.name_en.split(' ').any(|w| w == "Prime") && !item.name_en.ends_with(" Set")
+    (item.ducats.is_some() && !item.name_en.ends_with(" Set"))
+        || NO_DUCATS.contains(&item.name_en.as_str())
+}
+
+pub fn untradable() -> impl Iterator<Item = Item> {
+    UNTRADABLE.iter().map(|name| Item {
+        id: String::new(),
+        slug: String::new(),
+        name: name.to_string(),
+        name_en: name.to_string(),
+        max_rank: None,
+        subtypes: Vec::new(),
+        ducats: None,
+        game_ref: String::new(),
+    })
+}
+
+pub fn lowest_sell(orders: &[Order]) -> Option<u32> {
+    orders
+        .iter()
+        .filter(|o| o.order_type == OrderType::Sell)
+        .map(|o| o.platinum)
+        .min()
 }
 
 pub fn cards(words: &[Word]) -> Vec<String> {
@@ -171,6 +213,8 @@ mod tests {
             name_en: name_en.to_string(),
             max_rank: None,
             subtypes: Vec::new(),
+            ducats: None,
+            game_ref: String::new(),
         }
     }
 
@@ -210,9 +254,14 @@ mod tests {
     }
 
     #[test]
-    fn only_prime_parts_are_rewards() {
-        assert!(is_relic_reward(&item("x", "Ash Prime Systems Blueprint")));
-        assert!(!is_relic_reward(&item("x", "Ash Prime Set")));
+    fn relic_rewards_are_parts_with_ducats_and_requiem_mods() {
+        let with_ducats = |name_en| Item {
+            ducats: Some(45),
+            ..item("x", name_en)
+        };
+        assert!(is_relic_reward(&with_ducats("Ash Prime Systems Blueprint")));
+        assert!(!is_relic_reward(&with_ducats("Ash Prime Set")));
+        assert!(is_relic_reward(&item("x", "Lohk")));
         assert!(!is_relic_reward(&item("x", "Primed Continuity")));
         assert!(!is_relic_reward(&item("x", "Neo A1 Relic")));
     }
@@ -292,5 +341,31 @@ mod tests {
         let items = [item("Sistemas de Ash Prime", "Ash Prime Systems")];
         let (_, score) = best_match("Squad vote ends in 10", &items).unwrap();
         assert!(score < MIN_SCORE);
+    }
+
+    #[test]
+    fn lowest_sell_skips_buy_orders() {
+        use crate::model::{Platform, Status, Trader};
+        let order = |order_type, platinum| Order {
+            id: "id".into(),
+            item_id: "item".into(),
+            order_type,
+            platinum,
+            rank: None,
+            subtype: None,
+            user: Trader {
+                ingame_name: "TestTrader".into(),
+                platform: Platform::Pc,
+                crossplay: true,
+                status: Status::Ingame,
+            },
+        };
+        let orders = [
+            order(OrderType::Sell, 12),
+            order(OrderType::Sell, 9),
+            order(OrderType::Buy, 20),
+        ];
+        assert_eq!(lowest_sell(&orders), Some(9));
+        assert_eq!(lowest_sell(&orders[2..]), None);
     }
 }

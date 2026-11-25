@@ -1,0 +1,3 @@
+ALTER TABLE items ADD COLUMN ducats INTEGER;
+ALTER TABLE items ADD COLUMN game_ref TEXT NOT NULL DEFAULT '';
+DELETE FROM meta WHERE key = 'items_version';
