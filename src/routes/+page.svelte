@@ -213,12 +213,12 @@
   </span>
   <div class="controls">
     <button aria-label={t("window.minimize")} onclick={() => appWindow.minimize()}>&#x2013;</button>
-    <button aria-label={t("window.maximize")} onclick={() => appWindow.toggleMaximize()}
-      >&#x25A1;</button
-    >
-    <button class="close" aria-label={t("window.close")} onclick={() => appWindow.close()}
-      >&#x2715;</button
-    >
+    <button aria-label={t("window.maximize")} onclick={() => appWindow.toggleMaximize()}>
+      &#x25A1;
+    </button>
+    <button class="close" aria-label={t("window.close")} onclick={() => appWindow.close()}>
+      &#x2715;
+    </button>
   </div>
 </div>
 
@@ -255,15 +255,15 @@
     {#if update}
       <div class="cell shrink" role="status">
         <span class="value ok">{t("update.available", { version: update.version })}</span>
-        <button class="primary" onclick={runUpdate} disabled={!!updateStatus}
-          >{t("update.install")}</button
-        >
+        <button class="primary" onclick={runUpdate} disabled={!!updateStatus}>
+          {t("update.install")}
+        </button>
         <span class="value">{updateStatus}</span>
       </div>
     {/if}
-    <button class="settings" class:on={showSettings} onclick={() => (showSettings = !showSettings)}
-      >{t("settings.open")}</button
-    >
+    <button class="settings" class:on={showSettings} onclick={() => (showSettings = !showSettings)}>
+      {t("settings.open")}
+    </button>
   </div>
 
   <aside class="rail">
@@ -278,8 +278,10 @@
           showSettings = false;
           editing = null;
         }}
-        disabled={!catalog?.version}>+</button
+        disabled={!catalog?.version}
       >
+        +
+      </button>
     </div>
 
     {#if filters.length}
@@ -298,9 +300,9 @@
               }}
             >
               <span class="code">S-{pad(i + 1)}</span>
-              <span class="name"
-                >{filter.item?.name ?? t("filters.unknownItem", { id: filter.itemId })}</span
-              >
+              <span class="name">
+                {filter.item?.name ?? t("filters.unknownItem", { id: filter.itemId })}
+              </span>
               <span class="limit">
                 {t(filter.intent === "buy" ? "slot.buy" : "slot.sell", {
                   price: filter.priceLimit,
@@ -364,9 +366,9 @@
           />
           <button onclick={() => (editing = filter)}>{t("filters.edit")}</button>
           {#if confirmingDelete === filter.id}
-            <button class="danger" onclick={() => remove(filter.id)}
-              >{t("filters.reallyDelete")}</button
-            >
+            <button class="danger" onclick={() => remove(filter.id)}>
+              {t("filters.reallyDelete")}
+            </button>
             <button onclick={() => (confirmingDelete = null)}>{t("filters.keep")}</button>
           {:else}
             <button onclick={() => (confirmingDelete = filter.id)}>{t("filters.delete")}</button>
